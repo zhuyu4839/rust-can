@@ -1,27 +1,15 @@
 // #[cfg(not(all(target_os = "windows", target_arch = "x86")))]
 // compile_error!("This crate can only be compiled for 32-bit Windows.");
 
-#![allow(non_camel_case_types, non_upper_case_globals, non_snake_case, unused_parens, dead_code)]
-
-use crate::error::Error;
 use crate::frame::CanMessage;
-use isotp_rs::can::frame::{Direct, Frame};
-use isotp_rs::can::identifier::Id;
-use isotp_rs::can::CAN_FRAME_MAX_SIZE;
+use rs_can::error::CanError;
+use rs_can::{CanFilter, Frame};
 use std::ffi::{c_char, c_void, CStr, CString};
 
-include!(concat!(env!("OUT_DIR"), "/nican.rs"));
-
+mod api;
 mod constant;
-pub mod error;
 mod frame;
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub struct CanFilter {
-    can_id: u32,
-    can_mask: u32,
-    extended: bool,
-}
+use api::*;
 
 #[derive(Debug, Clone)]
 pub struct NiCan {
@@ -38,7 +26,7 @@ impl NiCan {
         filters: Vec<CanFilter>,
         bitrate: u32,
         log_errors: bool,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self, CanError> {
         let mut attr_id = vec![NC_ATTR_START_ON_OPEN, NC_ATTR_LOG_COMM_ERRS];
         let mut attr_val = vec![1, if log_errors { 1 } else { 0 }];
 
@@ -75,13 +63,13 @@ impl NiCan {
             )
         };
         if ret != 0 {
-            return Err(Error::NicanInitializationError);
+            return Err(CanError::InitializationError);
         }
 
         let mut handle = 0;
         let ret = unsafe { ncOpenObject(chl_ascii.into_raw(), &mut handle) };
         if ret != 0 {
-            return Err(Error::NicanInitializationError);
+            return Err(CanError::InitializationError);
         }
 
         Ok(Self {
@@ -94,23 +82,7 @@ impl NiCan {
     }
 
     pub fn transmit(&self, msg: CanMessage) {
-        let mut arb_id = msg.id().as_raw();
-        if msg.is_extended() {
-            arb_id |= NC_FL_CAN_ARBID_XTD;
-        }
-
-        let data_len = msg.data().len() as u8;
-        let mut data = msg.data().to_vec();
-        if data.len() < CAN_FRAME_MAX_SIZE {
-            data.resize(CAN_FRAME_MAX_SIZE, Default::default());
-        }
-
-        let raw_msg = NCTYPE_CAN_FRAME {
-            ArbitrationId: arb_id,
-            IsRemote: if msg.is_remote() { 1 } else { 0 },
-            DataLength: data_len,
-            Data: data.try_into().unwrap(),
-        };
+        let raw_msg = msg.into();
 
         let ret = unsafe {
             ncWrite(
@@ -121,7 +93,11 @@ impl NiCan {
         };
 
         if let Err(r) = self.check_status(ret) {
-            log::warn!("{} error {} when transmit", self.channel_info(), Self::status_to_str(r))
+            log::warn!(
+                "{} error {} when transmit",
+                self.channel_info(),
+                Self::status_to_str(r)
+            )
         }
     }
 
@@ -153,30 +129,16 @@ impl NiCan {
         };
 
         if let Err(r) = self.check_status(ret) {
-            log::warn!("{} error {} when receive", self.channel_info(), Self::status_to_str(r));
+            log::warn!(
+                "{} error {} when receive",
+                self.channel_info(),
+                Self::status_to_str(r)
+            );
             return None;
         }
 
-        let is_remote_frame = raw_msg.FrameType == NC_FRMTYPE_REMOTE as u8;
-        let is_error_frame = raw_msg.FrameType == NC_FRMTYPE_COMM_ERR as u8;
-        let arb_id = raw_msg.ArbitrationId;
-        let is_extended = (arb_id & NC_FL_CAN_ARBID_XTD) > 0;
-        let dlc = raw_msg.DataLength;
-        let timestamp =
-            (raw_msg.Timestamp.HighPart as u64) << 32 | (raw_msg.Timestamp.LowPart as u64);
-
-        let mut msg = if is_remote_frame {
-            CanMessage::new_remote(Id::from_bits(arb_id, is_extended), dlc as usize)
-        } else {
-            CanMessage::new(Id::from_bits(arb_id, is_extended), raw_msg.Data.as_slice())
-        }?;
-
-        msg.set_direct(Direct::Receive)
-            .set_timestamp(Some(
-                (1000. * (timestamp as f64 / 10000000. - 11644473600.)) as u64,
-            ))
-            .set_error_frame(is_error_frame)
-            .set_channel(self.channel.clone());
+        let mut msg = <NCTYPE_CAN_STRUCT as Into<Option<CanMessage>>>::into(raw_msg)?;
+        msg.set_channel(self.channel.clone());
 
         Some(msg)
     }
@@ -185,7 +147,11 @@ impl NiCan {
     pub fn reset(&self) {
         let ret = unsafe { ncAction(self.handle, NC_OP_RESET, 0) };
         if let Err(r) = self.check_status(ret) {
-            log::warn!("{} error {} when reset", self.channel_info(), Self::status_to_str(r));
+            log::warn!(
+                "{} error {} when reset",
+                self.channel_info(),
+                Self::status_to_str(r)
+            );
         }
     }
 
@@ -193,7 +159,11 @@ impl NiCan {
     pub fn close(&self) {
         let ret = unsafe { ncCloseObject(self.handle) };
         if let Err(r) = self.check_status(ret) {
-            log::warn!("{} error {} when close", self.channel_info(), Self::status_to_str(r));
+            log::warn!(
+                "{} error {} when close",
+                self.channel_info(),
+                Self::status_to_str(r)
+            );
         }
     }
 
@@ -250,8 +220,7 @@ impl NiCan {
 mod tests {
     use super::NiCan;
     use crate::frame::CanMessage;
-    use isotp_rs::can::frame::Frame;
-    use isotp_rs::can::identifier::Id;
+    use rs_can::{Frame, Id};
     use std::time::Duration;
 
     #[test]

@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "rs-can",
     "nican"
 ]
 resolver = "2"
@@ -9,6 +10,7 @@ resolver = "2"
 thiserror = "1"
 log = "0"
 dlopen2 = "0.7.0"
+bitflags = "2.6"
 isotp-rs = "0.1.8-alpha1"
 
 # dev-dependencies

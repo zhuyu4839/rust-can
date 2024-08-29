@@ -1,8 +1,6 @@
+use rs_can::utils::{data_resize, system_timestamp};
+use rs_can::{Direct, Frame, Id, CAN_FRAME_MAX_SIZE};
 use std::fmt::{Display, Formatter};
-use isotp_rs::can::frame::{Direct, Frame};
-use isotp_rs::can::identifier::Id;
-use isotp_rs::can::{CAN_FRAME_MAX_SIZE, DEFAULT_PADDING};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 #[repr(C)]
 #[derive(Debug, Clone)]
@@ -22,22 +20,6 @@ pub struct CanMessage {
 
 unsafe impl Send for CanMessage {}
 unsafe impl Sync for CanMessage {}
-
-#[inline]
-pub(crate) fn data_resize(data: &mut Vec<u8>, size: usize) {
-    data.resize(size, DEFAULT_PADDING);
-}
-
-#[inline]
-pub fn system_timestamp() -> u64 {
-    match SystemTime::now().duration_since(UNIX_EPOCH) {
-        Ok(v) => v.as_millis() as u64,
-        Err(e) => {
-            log::warn!("ZLGCAN - SystemTimeError: {0} when conversion failed!", e);
-            0
-        }
-    }
-}
 
 impl Frame for CanMessage {
     type Channel = String;
@@ -97,10 +79,7 @@ impl Frame for CanMessage {
     }
 
     #[inline]
-    fn set_timestamp(&mut self, value: Option<u64>) -> &mut Self
-    where
-        Self: Sized,
-    {
+    fn set_timestamp(&mut self, value: Option<u64>) -> &mut Self {
         self.timestamp = value.unwrap_or_else(system_timestamp);
         self
     }
@@ -116,10 +95,7 @@ impl Frame for CanMessage {
     }
 
     #[inline]
-    fn set_can_fd(&mut self, _: bool) -> &mut Self
-    where
-        Self: Sized,
-    {
+    fn set_can_fd(&mut self, _: bool) -> &mut Self {
         self
     }
 
@@ -139,10 +115,7 @@ impl Frame for CanMessage {
     }
 
     #[inline]
-    fn set_direct(&mut self, direct: Direct) -> &mut Self
-    where
-        Self: Sized,
-    {
+    fn set_direct(&mut self, direct: Direct) -> &mut Self {
         self.direct = direct;
         self
     }
@@ -153,10 +126,7 @@ impl Frame for CanMessage {
     }
 
     #[inline]
-    fn set_bitrate_switch(&mut self, value: bool) -> &mut Self
-    where
-        Self: Sized,
-    {
+    fn set_bitrate_switch(&mut self, value: bool) -> &mut Self {
         self.is_error_frame = value;
         self
     }
@@ -167,10 +137,7 @@ impl Frame for CanMessage {
     }
 
     #[inline]
-    fn set_error_frame(&mut self, value: bool) -> &mut Self
-    where
-        Self: Sized,
-    {
+    fn set_error_frame(&mut self, value: bool) -> &mut Self {
         self.is_error_frame = value;
         self
     }
@@ -181,10 +148,7 @@ impl Frame for CanMessage {
     }
 
     #[inline]
-    fn set_esi(&mut self, value: bool) -> &mut Self
-    where
-        Self: Sized,
-    {
+    fn set_esi(&mut self, value: bool) -> &mut Self {
         self.error_state_indicator = value;
         self
     }
@@ -195,10 +159,7 @@ impl Frame for CanMessage {
     }
 
     #[inline]
-    fn set_channel(&mut self, value: Self::Channel) -> &mut Self
-    where
-        Self: Sized,
-    {
+    fn set_channel(&mut self, value: Self::Channel) -> &mut Self {
         self.channel = value;
         self
     }
@@ -225,6 +186,6 @@ impl Frame for CanMessage {
 
 impl Display for CanMessage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        <dyn Frame<Channel=String> as Display>::fmt(self, f)
+        <dyn Frame<Channel = String> as Display>::fmt(self, f)
     }
 }

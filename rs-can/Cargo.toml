@@ -1,20 +1,18 @@
 [package]
-name = "nican"
+name = "rs-can"
 version = "0.1.0"
 edition = "2021"
-authors = ["zhuyu <zhuyu4839@gmail.com>"]
 license = "GPL-3.0"
+authors = ["zhuyu <zhuyu4839@gmail.com>"]
 description = "A Nican driver."
 homepage = "https://github.com/zhuyu4839/rust-can"
 repository = "https://github.com/zhuyu4839/rust-can"
 
 [dependencies]
 log = { workspace = true }
+bitflags = { workspace = true }
 thiserror = { workspace = true }
-rs-can = { path = "../rs-can" }
+isotp-rs = { workspace = true }
 
-[dev-dependencies]
-anyhow = { workspace = true }
-
-[build-dependencies]
-bindgen = "0.70"
+[features]
+async = []
