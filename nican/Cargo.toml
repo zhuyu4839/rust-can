@@ -1,0 +1,15 @@
+[package]
+name = "nican"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+log = { workspace = true }
+thiserror = { workspace = true }
+isotp-rs = { workspace = true }
+
+[dev-dependencies]
+anyhow = { workspace = true }
+
+[build-dependencies]
+bindgen = "0.70"
