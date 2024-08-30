@@ -20,3 +20,7 @@ rs-can = { path = "../rs-can" }
 
 [dev-dependencies]
 anyhow = { workspace = true }
+hex-literal = { workspace = true }
+bin_file = { workspace = true }
+crc = { workspace = true }
+ecu-uds = { workspace = true }
