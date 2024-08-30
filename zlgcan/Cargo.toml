@@ -1,10 +1,10 @@
 [package]
 name = "zlgcan"
-version = "0.1.0"
+version = "0.1.0-alpha0"
 edition = "2021"
 authors = ["zhuyu <zhuyu4839@gmail.com>"]
 license = "GPL-3.0"
-description = "A Nican driver."
+description = "A Cross-platform ZLGCAN driver."
 homepage = "https://github.com/zhuyu4839/rust-can"
 repository = "https://github.com/zhuyu4839/rust-can"
 
@@ -17,10 +17,6 @@ dotenvy = { workspace = true }
 dlopen2 = { workspace = true }
 isotp-rs = { workspace = true }
 rs-can = { path = "../rs-can" }
-
-[dependencies.tokio]
-workspace = true
-optional = true
 
 [dev-dependencies]
 anyhow = { workspace = true }

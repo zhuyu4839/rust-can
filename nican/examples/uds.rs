@@ -6,10 +6,9 @@ use nican::{CanMessage, NiCan};
 
 const CHANNEL: &'static str = "CAN0";
 
-fn init_device() -> anyhow::Result<(
-    SyncCan<NiCan, String, CanMessage>,
-    SyncClient<NiCan, String, CanMessage>,
-)> {
+type DriverClient = (SyncCan<NiCan, String, CanMessage>, SyncClient<NiCan, String, CanMessage>);
+
+fn init_device() -> anyhow::Result<DriverClient> {
     let mut device = NiCan::new();
     device.open(CHANNEL, vec![], 500_000, true)?;
 
