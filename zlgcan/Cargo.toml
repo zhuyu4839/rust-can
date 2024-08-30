@@ -1,22 +1,26 @@
 [package]
-name = "nican"
-version = "0.1.1-alpha0"
+name = "zlgcan"
+version = "0.1.0-alpha0"
 edition = "2021"
 authors = ["zhuyu <zhuyu4839@gmail.com>"]
 license = "GPL-3.0"
-description = "A Nican driver."
+description = "A Cross-platform ZLGCAN driver."
 homepage = "https://github.com/zhuyu4839/rust-can"
 repository = "https://github.com/zhuyu4839/rust-can"
 
 [dependencies]
 log = { workspace = true }
 thiserror = { workspace = true }
+serde = { workspace = true }
+serde_yaml = { workspace = true }
+dotenvy = { workspace = true }
+dlopen2 = { workspace = true }
 isotp-rs = { workspace = true }
 rs-can = { version = "0.1.0-alpha0", path = "../rs-can" }
 
 [dev-dependencies]
 anyhow = { workspace = true }
+hex-literal = { workspace = true }
+bin_file = { workspace = true }
+crc = { workspace = true }
 ecu-uds = { workspace = true }
-
-[build-dependencies]
-bindgen = "0.70"
