@@ -2,16 +2,20 @@
 members = [
     "rs-can",
     "nican"
-]
+, "zlgcan"]
 resolver = "2"
 
 
 [workspace.dependencies]
 thiserror = "1"
 log = "0"
-dlopen2 = "0.7.0"
+dlopen2 = "0.7"
 bitflags = "2.6"
-isotp-rs = "0.1.8-alpha1"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+dotenvy = "0.15"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+isotp-rs = { path = "../isotp-rs" }
 
 # dev-dependencies
 anyhow = "1"

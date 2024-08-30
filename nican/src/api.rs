@@ -6,8 +6,10 @@
 )]
 include!(concat!(env!("OUT_DIR"), "/nican.rs"));
 
+use isotp_rs::can::CAN_FRAME_MAX_SIZE;
+use isotp_rs::can::{frame::{Direct, Frame}, identifier::Id};
 use crate::frame::CanMessage;
-use rs_can::{Direct, Frame, Id, CAN_FRAME_MAX_SIZE};
+use rs_can::error::CanError;
 
 impl Into<NCTYPE_CAN_FRAME> for CanMessage {
     fn into(self) -> NCTYPE_CAN_FRAME {
@@ -31,8 +33,11 @@ impl Into<NCTYPE_CAN_FRAME> for CanMessage {
     }
 }
 
-impl Into<Option<CanMessage>> for NCTYPE_CAN_STRUCT {
-    fn into(self) -> Option<CanMessage> {
+impl TryInto<CanMessage> for NCTYPE_CAN_STRUCT {
+    type Error = CanError;
+
+    fn try_into(self) -> Result<CanMessage, Self::Error> {
+
         let is_remote_frame = self.FrameType == NC_FRMTYPE_REMOTE as u8;
         let is_error_frame = self.FrameType == NC_FRMTYPE_COMM_ERR as u8;
         let arb_id = self.ArbitrationId;
@@ -44,7 +49,8 @@ impl Into<Option<CanMessage>> for NCTYPE_CAN_STRUCT {
             CanMessage::new_remote(Id::from_bits(arb_id, is_extended), dlc as usize)
         } else {
             CanMessage::new(Id::from_bits(arb_id, is_extended), self.Data.as_slice())
-        }?;
+        }
+            .ok_or(CanError::FrameConvertFailed(format!("length of data is rather than {}", CAN_FRAME_MAX_SIZE)))?;
 
         msg.set_direct(Direct::Receive)
             .set_timestamp(Some(
@@ -52,6 +58,6 @@ impl Into<Option<CanMessage>> for NCTYPE_CAN_STRUCT {
             ))
             .set_error_frame(is_error_frame);
 
-        Some(msg)
+        Ok(msg)
     }
 }

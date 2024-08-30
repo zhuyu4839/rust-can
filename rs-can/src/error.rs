@@ -1,9 +1,22 @@
-#[derive(thiserror::Error, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(thiserror::Error, Debug,  Clone, Eq, PartialEq)]
 pub enum CanError {
-    #[error("RS-CAN - device initialization error")]
-    InitializationError,
-    #[error("RS-CAN - device operation error")]
-    OperationError,
-    #[error("RS-CAN - device timeout error")]
-    Timeout,
+    #[error("RUST-CAN - device configure failed")]
+    DeviceConfigFailed,
+    #[error("RUST-CAN - device open failed")]
+    DeviceOpenFailed,
+    #[error("RUST-CAN - channel: {0} initialize failed")]
+    ChannelInitializeError(String),
+    #[error("RUST-CAN - channel: {0} not opened")]
+    ChannelNotOpened(String),
+
+    #[error("RUST-CAN - channel: {0} operation error")]
+    OperationError(String),
+    #[error("RUST-CAN - channel: {0} timeout error")]
+    TimeoutError(String),
+
+    #[error("RUST-CAN - frame convert failed, reason: {0}")]
+    FrameConvertFailed(String),
+
+    #[error("RUST-CAN - other error: {0}")]
+    OtherError(String),
 }

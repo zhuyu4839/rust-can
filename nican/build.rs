@@ -1,18 +1,11 @@
+#[cfg(not(all(target_os = "windows", target_arch = "x86")))]
+compile_error!("This crate can only be compiled for 32-bit Windows.");
+
+use std::env;
+
 #[allow(dead_code)]
 fn generator() {
-    use std::env;
     use std::path::PathBuf;
-
-    #[cfg(target_arch = "x86")]
-    {
-        env::set_var("LIBCLANG_PATH", "D:/Program Files (x86)/LLVM/bin");
-        println!("cargo:rustc-link-search=native=D:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.39.33519/lib/x86");
-    }
-    #[cfg(target_arch = "x86_64")]
-    {
-        env::set_var("LIBCLANG_PATH", "D:/Program Files/LLVM/bin");
-        println!("cargo:rustc-link-search=native=D:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.39.33519/lib/x64");
-    }
 
     // the head path
     let header_path = r"D:\Program Files (x86)\National Instruments\Shared\CVI\include\Nican.h";
@@ -36,11 +29,14 @@ fn generator() {
 fn main() {
     generator();
 
+    env::set_var("LIBCLANG_PATH", "D:/Program Files (x86)/LLVM/bin");
+    println!("cargo:rustc-link-search=native=D:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.39.33519/lib/x86");
+
     println!("cargo:rustc-link-arg=/SAFESEH:NO");
 
     println!("cargo:rustc-link-lib=static=legacy_stdio_definitions");
 
-    println!("cargo:rustc-link-search=native=D:/Program Files (x86)/National Instruments/RT Images/NI-CAN");
+    // println!("cargo:rustc-link-search=native=D:/Program Files (x86)/National Instruments/RT Images/NI-CAN");
     println!("cargo:rustc-link-lib=dylib=nican");
 
     println!("cargo:rustc-link-search=native=D:/Program Files (x86)/National Instruments/Shared/CVI/extlib/msvc");

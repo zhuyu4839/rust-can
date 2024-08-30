@@ -1,5 +1,5 @@
 [package]
-name = "nican"
+name = "zlgcan"
 version = "0.1.0"
 edition = "2021"
 authors = ["zhuyu <zhuyu4839@gmail.com>"]
@@ -11,12 +11,16 @@ repository = "https://github.com/zhuyu4839/rust-can"
 [dependencies]
 log = { workspace = true }
 thiserror = { workspace = true }
+serde = { workspace = true }
+serde_yaml = { workspace = true }
+dotenvy = { workspace = true }
+dlopen2 = { workspace = true }
 isotp-rs = { workspace = true }
 rs-can = { path = "../rs-can" }
 
+[dependencies.tokio]
+workspace = true
+optional = true
+
 [dev-dependencies]
 anyhow = { workspace = true }
-ecu-uds = { path = "../../ecu-proto-rs/ecu-uds" }
-
-[build-dependencies]
-bindgen = "0.70"

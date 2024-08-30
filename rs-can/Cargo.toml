@@ -16,3 +16,6 @@ isotp-rs = { workspace = true }
 
 [features]
 async = []
+
+[dev-dependencies]
+anyhow = { workspace = true }
