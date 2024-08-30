@@ -12,11 +12,11 @@ repository = "https://github.com/zhuyu4839/rust-can"
 log = { workspace = true }
 thiserror = { workspace = true }
 isotp-rs = { workspace = true }
-rs-can = { path = "../rs-can" }
+rs-can = { version = "0.1.0-alpha0", path = "../rs-can" }
 
 [dev-dependencies]
 anyhow = { workspace = true }
-ecu-uds = { path = "../../ecu-proto-rs/ecu-uds" }
+ecu-uds = { workspace = true }
 
 [build-dependencies]
 bindgen = "0.70"
