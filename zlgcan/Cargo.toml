@@ -16,7 +16,7 @@ serde_yaml = { workspace = true }
 dotenvy = { workspace = true }
 dlopen2 = { workspace = true }
 isotp-rs = { workspace = true }
-rs-can = { path = "../rs-can" }
+rs-can = { version = "0.1.0-alpha0", path = "../rs-can" }
 
 [dev-dependencies]
 anyhow = { workspace = true }
