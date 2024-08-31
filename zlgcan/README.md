@@ -1,7 +1,7 @@
-# A Cross-platform ZLGCAN driver.
+# A Cross-platform ZLG(周立功) CAN driver.
 
 ## Overview
- **zlgcan** is a cross-platform driver for ZLGCAN device. Including windows and linux. 
+ **zlgcan** is a cross-platform driver for ZLG(周立功) device. Including windows and linux. 
  
  It is a part of rust-can driver.
 
