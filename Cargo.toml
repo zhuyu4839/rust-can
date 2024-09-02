@@ -1,10 +1,11 @@
 [workspace]
 members = [
+#    "nican",
     "rs-can",
-    "nican"
-, "zlgcan"]
-resolver = "2"
+    "zlgcan"
+]
 
+resolver = "2"
 
 [workspace.dependencies]
 thiserror = "1"
@@ -14,7 +15,7 @@ bitflags = "2.6"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 dotenvy = "0.15"
-isotp-rs = { version = "0.1.8-beta0" }
+isotp-rs = { version = "0.1.8-beta1" }
 
 # dev-dependencies
 anyhow = "1"

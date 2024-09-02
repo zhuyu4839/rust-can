@@ -11,13 +11,9 @@ use ecu_uds::docan::client::SyncClient;
 use ecu_uds::error::Error;
 use ecu_uds::service::{AddressAndLengthFormatIdentifier, RoutineCtrlType, TesterPresentType};
 
-pub(crate) const CHANNEL: u8 = 0;
+pub const CHANNEL: u8 = 0;
 
-pub(crate) fn init_client() -> Result<(
-    // ZCanDriver,
-    SyncCan<ZCanDriver, u8, CanMessage>,
-    SyncClient<ZCanDriver, u8, CanMessage>,
-), Error> {
+pub fn init_device() -> Result<ZCanDriver, Error> {
     let dev_type = ZCanDeviceType::ZCAN_USBCANFD_200U;
     let mut device = ZCanDriver::new(dev_type as u32, 0, None)
         .map_err(|e| Error::OtherError(e.to_string()))?;
@@ -36,11 +32,19 @@ pub(crate) fn init_client() -> Result<(
     device.init_can_chl(cfg)
         .map_err(|e| Error::OtherError(e.to_string()))?;
 
+    Ok(device)
+}
+
+pub(crate) fn init_client() -> Result<(
+    // ZCanDriver,
+    SyncCan<ZCanDriver, u8, CanMessage>,
+    SyncClient<ZCanDriver, u8, CanMessage>,
+), Error> {
+    let device = init_device()?;
     std::thread::sleep(std::time::Duration::from_millis(100));
+    let mut driver = SyncCan::new(device.clone());
 
-    let mut sync_can = SyncCan::new(device.clone());
-
-    let mut client = SyncClient::new(sync_can.clone());
+    let mut client = SyncClient::new(driver.clone());
     client.init_channel(CHANNEL, Address {
         tx_id: 0x7E0,
         rx_id: 0x7E8,
@@ -49,9 +53,9 @@ pub(crate) fn init_client() -> Result<(
 
     // let algo = Arc::new(Box::new(uds_security_algo));
 
-    sync_can.sync_start(100);
+    driver.sync_start(100);
 
-    Ok((sync_can, client))
+    Ok((driver, client))
 }
 
 pub(crate) fn uds_flash_file(

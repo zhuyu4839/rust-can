@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use dlopen2::symbor::{Container};
 use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFdFrameV1, ZCanFdFrameV2, ZCanFrameType, ZCanFrameV1, ZCanFrameV2, ZCanFrameV3};
-use crate::device::{DeriveInfo, Handler, ZCanDeviceType, ZCanError, ZChannelContext, ZDeviceContext, ZDeviceInfo};
+use crate::device::{DeriveInfo, Handler, ZCanDeviceType, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::lin::{ZLinChlCfg, ZLinDataType, ZLinFrame, ZLinFrameDataUnion, ZLinPublish, ZLinSubscribe};
 use crate::TryFromIterator;
 use crate::api::linux::usbcan::USBCANApi;
@@ -10,6 +10,7 @@ use crate::api::linux::usbcanfd::USBCANFDApi;
 use crate::api::linux::usbcanfd_800u::USBCANFD800UApi;
 use crate::api::{ZCanApi, ZDeviceApi, ZLinApi};
 use crate::driver::ZDevice;
+use crate::error::ZCanError;
 
 #[cfg(target_arch = "x86")]
 const LIB_PATH: &str = "library/linux/x86/";
