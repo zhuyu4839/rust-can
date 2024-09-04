@@ -28,26 +28,26 @@ To use **zlgcan** in your Rust project, add it as a dependency in your `Cargo.to
 zlgcan = { version="lastest-version" }
 ```
 
-### Create library
+### Create library and configuration
 
-Create folder and ensure the file of folder like:
-```shell
-├── bitrate.cfg.yaml
-├── linux
-│         └── x86_64
-└── windows
-    ├── x86
-    └── x86_64
-```
-and copy all files into correct directory.
+ * Create folder and ensure the file of folder like:
+    ```shell
+    ├── bitrate.cfg.yaml
+    ├── linux
+    │   └── x86_64
+    └── windows
+        ├── x86
+        └── x86_64
+    ```
+    and copy all files into correct directory.
 
-The basic [library](https://github.com/zhuyu4839/zlgcan-driver-rs/tree/master/zlgcan-driver/library).
-The [bitrate.cfg.yaml](https://github.com/zhuyu4839/zlgcan-driver-rs/blob/master/zlgcan-driver/bitrate.cfg.yaml)
+    The basic [library](https://github.com/zhuyu4839/zlgcan-driver-rs/tree/master/zlgcan-driver/library).
+    The [bitrate.cfg.yaml](https://github.com/zhuyu4839/zlgcan-driver-rs/blob/master/zlgcan-driver/bitrate.cfg.yaml)
 
-### Create `zcan.env` at your project path for special `ZCAN_LIBRARY` path, For example:
-```shell
-ZCAN_LIBRARY=/path/to/your/created
-```
+* Create `zcan.env` at your project path for special `ZCAN_LIBRARY` path, For example:
+    ```shell
+    ZCAN_LIBRARY=/path/to/your/created
+    ```
 
 ### Known defects
  * The timestamp of frame is incorrect.
