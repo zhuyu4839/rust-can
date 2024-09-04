@@ -269,9 +269,12 @@ pub struct CanChlCfgFactory(Arc<HashMap<String, BitrateCfg>>);
 
 impl CanChlCfgFactory {
     pub fn new() -> Result<Self, ZCanError> {
-        let libpath = match dotenvy::from_filename("zcan.env") {
-            Ok(_) => std::env::var("ZCAN_BITRATE").unwrap_or_else(|_| BITRATE_CFG_FILENAME.into()),
-            Err(_) => BITRATE_CFG_FILENAME.into(),
+        let libpath = match dotenvy::from_filename(ZCAN_ENV) {
+            Ok(_) => match std::env::var(ZCAN_VAR){
+                Ok(v) => format!("{}/{}", v, BITRATE_CFG_FILENAME),
+                Err(_) => format!("{}/{}", ZCAN_PATH_DEFAULT, BITRATE_CFG_FILENAME),
+            },
+            Err(_) => format!("{}/{}", ZCAN_PATH_DEFAULT, BITRATE_CFG_FILENAME),
         };
         let data = read_to_string(libpath.clone())
             .map_err(|e| ZCanError::ConfigurationError(format!("Unable to read `{}`: {:?}", libpath, e)))?;

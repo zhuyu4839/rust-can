@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use dlopen2::symbor::{Container};
-use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFdFrameV1, ZCanFdFrameV2, ZCanFrameType, ZCanFrameV1, ZCanFrameV2, ZCanFrameV3};
-use crate::device::{DeriveInfo, Handler, ZCanDeviceType, ZCanError, ZChannelContext, ZDeviceContext, ZDeviceInfo};
+use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFdFrameV1, ZCanFdFrameV2, ZCanFrameType, ZCanFrameV1, ZCanFrameV2, ZCanFrameV3, ZCAN_VAR, ZCAN_ENV, ZCAN_PATH_DEFAULT};
+use crate::device::{DeriveInfo, Handler, ZCanDeviceType, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::lin::{ZLinChlCfg, ZLinDataType, ZLinFrame, ZLinFrameDataUnion, ZLinPublish, ZLinSubscribe};
 use crate::TryFromIterator;
 use crate::api::linux::usbcan::USBCANApi;
@@ -10,11 +10,12 @@ use crate::api::linux::usbcanfd::USBCANFDApi;
 use crate::api::linux::usbcanfd_800u::USBCANFD800UApi;
 use crate::api::{ZCanApi, ZDeviceApi, ZLinApi};
 use crate::driver::ZDevice;
+use crate::error::ZCanError;
 
 #[cfg(target_arch = "x86")]
-const LIB_PATH: &str = "library/linux/x86/";
+const LIB_PATH: &str = "linux/x86/";
 #[cfg(target_arch = "x86_64")]
-const LIB_PATH: &str = "library/linux/x86_64/";
+const LIB_PATH: &str = "linux/x86_64/";
 
 #[derive(Clone)]
 pub struct ZCanDriver {
@@ -32,12 +33,12 @@ pub struct ZCanDriver {
 impl ZDevice for ZCanDriver {
     fn new(dev_type: u32, dev_idx: u32, derive: Option<DeriveInfo>) -> Result<Self, ZCanError> {
         let dev_type = ZCanDeviceType::try_from(dev_type)?;
-        let libpath = match dotenvy::from_filename("zcan.env") {
-            Ok(_) => match std::env::var("ZCAN_LIBRARY") {
+        let libpath = match dotenvy::from_filename(ZCAN_ENV) {
+            Ok(_) => match std::env::var(ZCAN_VAR) {
                 Ok(v) => format!("{}/{}", v, LIB_PATH),
-                Err(_) => LIB_PATH.into(),
+                Err(_) => format!("{}/{}", ZCAN_PATH_DEFAULT, LIB_PATH),
             },
-            Err(_) => LIB_PATH.into(),
+            Err(_) => format!("{}/{}", ZCAN_PATH_DEFAULT, LIB_PATH),
         };
         Ok(Self {
             handler: Default::default(),

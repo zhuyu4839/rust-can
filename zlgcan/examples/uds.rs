@@ -3,8 +3,8 @@ mod utils;
 use std::time::Duration;
 use hex_literal::hex;
 use isotp_rs::can::Address;
-use ecu_uds::service::{CommunicationCtrlType, CommunicationType, DataIdentifier, DTCSettingType, ECUResetType, IOCtrlParameter, RoutineCtrlType, SessionType};
-use crate::utils::{uds_flash_file, uds_security_algo, CHANNEL};
+use ecu_uds::service::{CommunicationCtrlType, CommunicationType, DataIdentifier, DTCSettingType, ECUResetType, RoutineCtrlType, SessionType};
+use crate::utils::{uds_flash_file, algo::uds_security_algo, CHANNEL};
 
 
 #[test]
@@ -100,7 +100,7 @@ fn test_io_control() -> anyhow::Result<()> {
     let result = client.io_control(
         0,
         DataIdentifier::from(0x4101),
-        IOCtrlParameter::ShortTermAdjustment,
+        ecu_uds::service::IOCtrlParameter::ShortTermAdjustment,
         vec![0x00, 0x40],
         vec![0xff, 0xff],
     )?;
@@ -111,9 +111,7 @@ fn test_io_control() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[test]
-#[ignore]
-fn test_flash() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<()> {
     let (mut device, mut client) = utils::init_client()?;
 
     client.update_address(CHANNEL, Address {
@@ -165,9 +163,5 @@ fn test_flash() -> anyhow::Result<()> {
     device.stop();
 
     Ok(())
-}
-
-fn main() {
-
 }
 

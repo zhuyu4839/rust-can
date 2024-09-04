@@ -204,10 +204,11 @@ mod tests {
         ZCanFrameV1,
         CanMessage, CanChlCfgFactory
     };
-    use crate::device::{ZCanDeviceType, ZCanError, ZChannelContext, ZDeviceContext};
-    use crate::utils::system_timestamp;
+    use crate::device::{ZCanDeviceType, ZChannelContext, ZDeviceContext};
+    use rs_can::utils::system_timestamp;
     use super::USBCANApi;
     use crate::api::{ZCanApi, ZDeviceApi};
+    use crate::error::ZCanError;
 
     #[test]
     fn test_init_channel() -> anyhow::Result<()> {

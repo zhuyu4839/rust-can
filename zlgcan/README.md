@@ -1,7 +1,7 @@
-# A Cross-platform ZLGCAN driver.
+# A Cross-platform ZLG(周立功) CAN driver.
 
 ## Overview
- **zlgcan** is a cross-platform driver for ZLGCAN device. Including windows and linux. 
+ **zlgcan** is a cross-platform driver for ZLG(周立功) device. Including windows and linux. 
  
  It is a part of rust-can driver.
 
@@ -27,6 +27,27 @@ To use **zlgcan** in your Rust project, add it as a dependency in your `Cargo.to
 [dependencies]
 zlgcan = { version="lastest-version" }
 ```
+
+### Create library and configuration
+
+ * Create folder and ensure the file of folder like:
+    ```shell
+    ├── bitrate.cfg.yaml
+    ├── linux
+    │   └── x86_64
+    └── windows
+        ├── x86
+        └── x86_64
+    ```
+    and copy all files into correct directory.
+
+    The basic [library](https://github.com/zhuyu4839/zlgcan-driver-rs/tree/master/zlgcan-driver/library).
+    The [bitrate.cfg.yaml](https://github.com/zhuyu4839/zlgcan-driver-rs/blob/master/zlgcan-driver/bitrate.cfg.yaml)
+
+* Create `zcan.env` at your project path for special `ZCAN_LIBRARY` path, For example:
+    ```shell
+    ZCAN_LIBRARY=/path/to/your/created
+    ```
 
 ### Known defects
  * The timestamp of frame is incorrect.
