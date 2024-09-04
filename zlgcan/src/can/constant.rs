@@ -4,7 +4,7 @@ use crate::error::ZCanError;
 pub(crate) const BITRATE_CFG_FILENAME: &str = "bitrate.cfg.yaml";
 pub(crate) const ZCAN_ENV: &str = "zcan.env";
 pub(crate) const ZCAN_VAR: &str = "ZCAN_LIBRARY";
-pub(crate) const ZCAN_PATH_DEFAULT: &str = "zcan_library";
+pub(crate) const ZCAN_PATH_DEFAULT: &str = "library";
 pub(crate) const TIMING0: &str = "timing0";
 pub(crate) const TIMING1: &str = "timing1";
 pub const TSEG1: &str = "tseg1";     // Time Segment 1
