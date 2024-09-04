@@ -1,5 +1,4 @@
-mod algo;
-pub(crate) use algo::uds_security_algo;
+pub(crate) mod algo;
 
 use crc::{Crc, CRC_32_BZIP2};
 use isotp_rs::can::Address;
@@ -35,8 +34,7 @@ pub fn init_device() -> Result<ZCanDriver, Error> {
     Ok(device)
 }
 
-pub(crate) fn init_client() -> Result<(
-    // ZCanDriver,
+pub fn init_client() -> Result<(
     SyncCan<ZCanDriver, u8, CanMessage>,
     SyncClient<ZCanDriver, u8, CanMessage>,
 ), Error> {
@@ -58,7 +56,7 @@ pub(crate) fn init_client() -> Result<(
     Ok((driver, client))
 }
 
-pub(crate) fn uds_flash_file(
+pub fn uds_flash_file(
     filepath: &str,
     client: &mut SyncClient<ZCanDriver, u8, CanMessage>,
     channel: u8,

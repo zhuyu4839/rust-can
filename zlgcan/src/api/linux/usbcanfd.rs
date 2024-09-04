@@ -369,6 +369,7 @@ impl ZCloudApi for USBCANFDApi<'_> {}
 mod tests {
     use dlopen2::symbor::{Library, SymBorApi};
     use isotp_rs::can::{frame::Frame, identifier::Id};
+    use rs_can::utils::system_timestamp;
     use crate::TryFrom;
     use crate::can::{
         ZCanChlMode, ZCanChlType,
@@ -378,7 +379,6 @@ mod tests {
     use crate::device::{ZCanDeviceType, ZChannelContext, ZDeviceContext};
     use crate::can::CanChlCfgFactory;
     use crate::error::ZCanError;
-    use crate::utils::system_timestamp;
     use crate::api::{ZCanApi, ZDeviceApi};
     use super::USBCANFDApi;
 

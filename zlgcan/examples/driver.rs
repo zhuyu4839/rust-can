@@ -4,7 +4,6 @@ use isotp_rs::can::frame::Frame;
 use isotp_rs::can::identifier::Id;
 use isotp_rs::device::Driver;
 use zlgcan::can::CanMessage;
-use zlgcan::driver::ZDevice;
 use crate::utils::{init_device, CHANNEL};
 
 fn main() -> anyhow::Result<()> {
