@@ -52,9 +52,9 @@ impl TryFrom<u8> for ZCanFrameType {
 impl Display for ZCanFrameType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::CAN => writeln!(f, "CAN"),
-            Self::CANFD => writeln!(f, "CANFD"),
-            Self::ALL => writeln!(f, "CAN|CANFD"),
+            Self::CAN => write!(f, "CAN"),
+            Self::CANFD => write!(f, "CANFD"),
+            Self::ALL => write!(f, "CAN|CANFD"),
         }
     }
 }
