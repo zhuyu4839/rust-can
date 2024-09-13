@@ -351,7 +351,9 @@ impl ZCanApi for Api<'_> {
 
     fn get_can_num(&self, context: &ZChannelContext, can_type: ZCanFrameType) -> Result<u32, ZCanError> {
         let ret = unsafe { (self.ZCAN_GetReceiveNum)(context.channel_handler()?, can_type as u8) };
-        log::debug!("ZLGCAN - get receive {} number: {}.", can_type, ret);
+        if ret > 0 {
+            log::trace!("ZLGCAN - get receive {} number: {}.", can_type, ret);
+        }
         Ok(ret)
     }
 
@@ -370,8 +372,8 @@ impl ZCanApi for Api<'_> {
         if count < size {
             log::warn!("ZLGCAN - receive CAN frame expect: {}, actual: {}!", size, count);
         }
-        else {
-            log::debug!("ZLGCAN - receive CAN frame: {}", count);
+        else if ret > 0 {
+            log::trace!("ZLGCAN - receive CAN frame: {}", count);
         }
         Ok(frames)
     }
@@ -405,7 +407,7 @@ impl ZCanApi for Api<'_> {
             log::warn!("ZLGCAN - transmit CAN frame expect: {}, actual: {}!", len, count);
         }
         else {
-            log::debug!("ZLGCAN - transmit CAN frame: {}", count);
+            log::trace!("ZLGCAN - transmit CAN frame: {}", count);
         }
         Ok(count)
     }
@@ -426,8 +428,8 @@ impl ZCanApi for Api<'_> {
         if count < size {
             log::warn!("ZLGCAN - receive CANFD frame expect: {}, actual: {}!", size, count);
         }
-        else {
-            log::debug!("ZLGCAN - receive CANFD frame: {}", count);
+        else if ret > 0 {
+            log::trace!("ZLGCAN - receive CANFD frame: {}", count);
         }
         Ok(frames)
     }
@@ -449,7 +451,7 @@ impl ZCanApi for Api<'_> {
             log::warn!("ZLGCAN - transmit CAN-FD frame expect: {}, actual: {}!", len, count);
         }
         else {
-            log::debug!("ZLGCAN - transmit CAN-FD frame: {}", count);
+            log::trace!("ZLGCAN - transmit CAN-FD frame: {}", count);
         }
         Ok(count)
     }
@@ -480,7 +482,9 @@ impl ZLinApi for Api<'_> {
     }
     fn get_lin_num(&self, context: &ZChannelContext) -> Result<u32, ZCanError> {
         let ret = unsafe { (self.ZCAN_GetLINReceiveNum)(context.channel_handler()?) };
-        log::debug!("ZLGCAN - get receive LIN number: {}.", ret);
+        if ret > 0 {
+            log::trace!("ZLGCAN - get receive LIN number: {}.", ret);
+        }
         Ok(ret)
     }
     fn receive_lin(&self, context: &ZChannelContext, size: u32, timeout: u32, resize: impl Fn(&mut Vec<ZLinFrame>, usize)) -> Result<Vec<ZLinFrame>, ZCanError> {
@@ -492,8 +496,8 @@ impl ZLinApi for Api<'_> {
         if ret < size {
             log::warn!("ZLGCAN - receive LIN frame expect: {}, actual: {}!", size, ret);
         }
-        else {
-            log::debug!("ZLGCAN - receive LIN frame: {}", ret);
+        else if ret > 0 {
+            log::trace!("ZLGCAN - receive LIN frame: {}", ret);
         }
         Ok(frames)
     }
@@ -504,7 +508,7 @@ impl ZLinApi for Api<'_> {
             log::warn!("ZLGCAN - transmit LIN frame expect: {}, actual: {}!", len, ret);
         }
         else {
-            log::debug!("ZLGCAN - transmit LIN frame: {}", ret);
+            log::trace!("ZLGCAN - transmit LIN frame: {}", ret);
         }
         Ok(ret)
     }
@@ -593,8 +597,8 @@ impl ZCloudApi for Api<'_> {
         if ret < size {
             log::warn!("ZLGCAN - receive GPS frame expect: {}, actual: {}!", size, ret);
         }
-        else {
-            log::debug!("ZLGCAN - receive GPS frame: {}", ret);
+        else if ret > 0 {
+            log::trace!("ZLGCAN - receive GPS frame: {}", ret);
         }
         Ok(frames)
     }

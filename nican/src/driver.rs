@@ -163,7 +163,7 @@ impl NiCan {
             Some(ctx) => {
                 if let Err(ret) = Self::wait_for_state(channel.as_str(), ctx.handle, timeout) {
                     if ret == constant::CanErrFunctionTimeout {
-                        log::debug!("{} wait for state timeout", Self::channel_info(channel.as_str()));
+                        log::warn!("{} wait for state timeout", Self::channel_info(channel.as_str()));
                     }
                     return Err(CanError::TimeoutError(Self::channel_info(channel.as_str())));
                 }

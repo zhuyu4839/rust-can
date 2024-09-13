@@ -224,7 +224,9 @@ impl ZCanApi for USBCANFDApi<'_> {
             ZCanFrameType::ALL => return Err(ZCanError::ParamNotSupported),
         }
         let ret = unsafe { (self.VCI_GetReceiveNum)(dev_type as u32, dev_idx, _channel) };
-        log::debug!("ZLGCAN - get receive {} number: {}.", can_type, ret);
+        if ret > 0 {
+            log::trace!("ZLGCAN - get receive {} number: {}.", can_type, ret);
+        }
         Ok(ret)
     }
 
@@ -237,8 +239,8 @@ impl ZCanApi for USBCANFDApi<'_> {
         if ret < size {
             log::warn!("ZLGCAN - receive CAN frame expect: {}, actual: {}!", size, ret);
         }
-        else {
-            log::debug!("ZLGCAN - receive CAN frame: {}", ret);
+        else if ret > 0 {
+            log::trace!("ZLGCAN - receive CAN frame: {}", ret);
         }
         Ok(frames)
     }
@@ -251,7 +253,7 @@ impl ZCanApi for USBCANFDApi<'_> {
             log::warn!("ZLGCAN - transmit CAN frame expect: {}, actual: {}!", len, ret);
         }
         else {
-            log::debug!("ZLGCAN - transmit CAN frame: {}", ret);
+            log::trace!("ZLGCAN - transmit CAN frame: {}", ret);
         }
         Ok(ret)
     }
@@ -266,8 +268,8 @@ impl ZCanApi for USBCANFDApi<'_> {
         if ret < size {
             log::warn!("ZLGCAN - receive CAN-FD frame expect: {}, actual: {}!", size, ret);
         }
-        else {
-            log::debug!("ZLGCAN - receive CAN-FD frame: {}", ret);
+        else if ret > 0 {
+            log::trace!("ZLGCAN - receive CAN-FD frame: {}", ret);
         }
         Ok(frames)
     }
@@ -280,7 +282,7 @@ impl ZCanApi for USBCANFDApi<'_> {
             log::warn!("ZLGCAN - transmit CAN-FD frame expect: {}, actual: {}!", len, ret);
         }
         else {
-            log::debug!("ZLGCAN - transmit CAN-FD frame: {}", ret);
+            log::trace!("ZLGCAN - transmit CAN-FD frame: {}", ret);
         }
         Ok(ret)
     }
@@ -316,7 +318,9 @@ impl ZLinApi for USBCANFDApi<'_> {
     fn get_lin_num(&self, context: &ZChannelContext) -> Result<u32, ZCanError> {
         let (dev_type, dev_idx, channel) = (context.device_type(), context.device_index(), context.channel());
         let ret = unsafe { (self.VCI_GetLINReceiveNum)(dev_type as u32, dev_idx, channel as u32) };
-        log::debug!("ZLGCAN - get receive LIN number: {}.", ret);
+        if ret > 0 {
+            log::trace!("ZLGCAN - get receive LIN number: {}.", ret);
+        }
         Ok(ret)
     }
     fn receive_lin(&self, context: &ZChannelContext, size: u32, timeout: u32, resize: impl Fn(&mut Vec<ZLinFrame>, usize)) -> Result<Vec<ZLinFrame>, ZCanError> {
@@ -328,8 +332,8 @@ impl ZLinApi for USBCANFDApi<'_> {
         if ret < size {
             log::warn!("ZLGCAN - receive LIN frame expect: {}, actual: {}!", size, ret);
         }
-        else {
-            log::debug!("ZLGCAN - receive LIN frame: {}", ret);
+        else if ret > 0 {
+            log::trace!("ZLGCAN - receive LIN frame: {}", ret);
         }
         Ok(frames)
     }
@@ -341,7 +345,7 @@ impl ZLinApi for USBCANFDApi<'_> {
             log::warn!("ZLGCAN - transmit LIN frame expect: {}, actual: {}!", len, ret);
         }
         else {
-            log::debug!("ZLGCAN - transmit LIN frame: {}", ret);
+            log::trace!("ZLGCAN - transmit LIN frame: {}", ret);
         }
         Ok(ret)
     }

@@ -158,7 +158,9 @@ impl ZCanApi for USBCANApi<'_> {
             ZCanFrameType::ALL => return Err(ZCanError::MethodNotSupported),
         }
         let ret = unsafe { (self.VCI_GetReceiveNum)(dev_type as u32, dev_idx, _channel) };
-        log::debug!("ZLGCAN - get receive {} number: {}.", can_type, ret);
+        if ret > 0 {
+            log::trace!("ZLGCAN - get receive {} number: {}.", can_type, ret);
+        }
         Ok(ret)
     }
 
@@ -171,8 +173,8 @@ impl ZCanApi for USBCANApi<'_> {
         if ret < size {
             log::warn!("ZLGCAN - receive CAN frame expect: {}, actual: {}!", size, ret);
         }
-        else {
-            log::debug!("ZLGCAN - receive CAN frame: {}", ret);
+        else if ret > 0 {
+            log::trace!("ZLGCAN - receive CAN frame: {}", ret);
         }
         Ok(frames)
     }
@@ -185,7 +187,7 @@ impl ZCanApi for USBCANApi<'_> {
             log::warn!("ZLGCAN - transmit CAN frame expect: {}, actual: {}!", len, ret);
         }
         else {
-            log::debug!("ZLGCAN - transmit CAN frame: {}", ret);
+            log::trace!("ZLGCAN - transmit CAN frame: {}", ret);
         }
         Ok(ret)
     }
