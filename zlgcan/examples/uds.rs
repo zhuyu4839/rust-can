@@ -93,7 +93,7 @@ fn test_io_control() -> anyhow::Result<()> {
     client.session_ctrl(CHANNEL, SessionType::Extended, false, false)?;
     let result = client.security_access(CHANNEL, 1, vec![])?;
     println!("security access response: {:?}", result);
-    let param = uds_security_algo(1, result, hex!("01 41 32 30").to_vec());
+    let param = uds_security_algo(1, result, hex!("01 41 32 30").to_vec())?;
     let result = client.security_access(CHANNEL, 2, param)?;
     println!("security access response: {:?}", result);
 
@@ -130,7 +130,7 @@ fn main() -> anyhow::Result<()> {
     client.session_ctrl(CHANNEL, SessionType::Programming, false, false)?;
 
     let result = client.security_access(CHANNEL, 0x11, vec![])?;
-    let param = uds_security_algo(0x11, result, hex!("01 41 32 30").to_vec());
+    let param = uds_security_algo(0x11, result, hex!("01 41 32 30").to_vec())?;
     client.security_access(CHANNEL, 0x12, param)?;
 
     client.write_data_by_identifier(CHANNEL, DataIdentifier::ProgrammingDate, vec![0x20, 0x24, 0x08, 0x21])?;

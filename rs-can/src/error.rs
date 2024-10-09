@@ -4,12 +4,15 @@ pub enum CanError {
     DeviceConfigFailed,
     #[error("RUST-CAN - device open failed")]
     DeviceOpenFailed,
+    #[error("RUST-CAN - device not supported")]
+    DeviceNotSupported,
+
     #[error("RUST-CAN - channel: {0} initialize failed")]
     ChannelInitializeError(String),
     #[error("RUST-CAN - channel: {0} not opened")]
     ChannelNotOpened(String),
 
-    #[error("RUST-CAN - channel: {0} operation error")]
+    #[error("RUST-CAN - operation error: {0}")]
     OperationError(String),
     #[error("RUST-CAN - channel: {0} timeout error")]
     TimeoutError(String),
