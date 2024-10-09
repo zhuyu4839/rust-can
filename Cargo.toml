@@ -16,11 +16,11 @@ bitflags = "2.6"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 dotenvy = "0.15"
-isotp-rs = { version = "0.1.9" }
+isotp-rs = { version = "0.2.0" }
 
 # dev-dependencies
 anyhow = "1"
 hex-literal = "0.4"
 bin_file = "0.1"
 crc = "3.2"
-ecu-uds = "0.1.1"
+ecu-uds = "0.1.2"
