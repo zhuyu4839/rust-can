@@ -1,5 +1,10 @@
 # A Cross-platform ZLG(周立功) CAN driver.
 
+[![Latest version](https://img.shields.io/crates/v/zlgcan.svg)](https://crates.io/crates/zlgcan)
+[![Documentation](https://docs.rs/bleasy/badge.svg)](https://docs.rs/zlgcan)
+![LGPL](https://img.shields.io/badge/license-LGPL-green.svg)
+![MIT](https://img.shields.io/badge/license-MIT-yellow.svg)
+
 ## Overview
  **zlgcan** is a cross-platform driver for ZLG(周立功) device. Including windows and linux. 
  

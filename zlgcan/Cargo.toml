@@ -1,6 +1,6 @@
 [package]
 name = "zlgcan"
-version = "0.1.0-alpha1"
+version = "0.1.0-alpha5"
 edition = "2021"
 authors = ["zhuyu <zhuyu4839@gmail.com>"]
 license = "GPL-3.0"
@@ -16,7 +16,7 @@ serde_yaml = { workspace = true }
 dotenvy = { workspace = true }
 dlopen2 = { workspace = true }
 isotp-rs = { workspace = true }
-rs-can = { version = "0.1.0-alpha0", path = "../rs-can" }
+rs-can = { version = "0.1.0-alpha1", path = "../rs-can" }
 
 [dev-dependencies]
 anyhow = { workspace = true }
