@@ -418,7 +418,7 @@ impl ZCanApi for Api<'_> {
         for _ in 0..size {
             let mut frame: ZCanFdFrameV2 = Default::default();
             let ret = unsafe { (self.ZCAN_ReceiveFD)(context.channel_handler()?, &mut frame, 1, timeout) };
-            if ret != 1 {
+            if ret == 1 {
                 count += 1;
                 frames.push(frame);
             }
