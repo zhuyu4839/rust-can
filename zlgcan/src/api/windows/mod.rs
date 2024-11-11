@@ -372,9 +372,7 @@ impl ZCanApi for Api<'_> {
         if count < size {
             log::warn!("ZLGCAN - receive CAN frame expect: {}, actual: {}!", size, count);
         }
-        else if ret > 0 {
-            log::trace!("ZLGCAN - receive CAN frame: {}", count);
-        }
+
         Ok(frames)
     }
 
@@ -428,9 +426,7 @@ impl ZCanApi for Api<'_> {
         if count < size {
             log::warn!("ZLGCAN - receive CANFD frame expect: {}, actual: {}!", size, count);
         }
-        else if ret > 0 {
-            log::trace!("ZLGCAN - receive CANFD frame: {}", count);
-        }
+
         Ok(frames)
     }
 
