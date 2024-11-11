@@ -1,7 +1,5 @@
 use std::time::Duration;
-use isotp_rs::can::frame::Frame;
-use isotp_rs::can::identifier::Id;
-use isotp_rs::device::Driver;
+use iso15765_2::{can::{Frame, Id}, device::Driver};
 use nican::{CanMessage, NiCan};
 
 fn main() -> anyhow::Result<()> {

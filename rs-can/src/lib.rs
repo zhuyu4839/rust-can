@@ -3,5 +3,6 @@
 mod device;
 pub use device::*;
 
-pub mod error;
+mod error;
+pub use error::*;
 pub mod utils;

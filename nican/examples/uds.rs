@@ -1,7 +1,6 @@
-use ecu_uds::docan::client::SyncClient;
-use ecu_uds::service::SessionType;
-use isotp_rs::can::Address;
-use isotp_rs::can::driver::SyncCan;
+use docan::client::SyncClient;
+use iso14229_1::SessionType;
+use iso15765_2::can::{Address, driver::SyncCan};
 use nican::{CanMessage, NiCan};
 
 const CHANNEL: &'static str = "CAN0";

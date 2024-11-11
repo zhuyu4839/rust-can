@@ -6,10 +6,9 @@
 )]
 include!(concat!(env!("OUT_DIR"), "/nican.rs"));
 
-use isotp_rs::can::CAN_FRAME_MAX_SIZE;
-use isotp_rs::can::{frame::{Direct, Frame}, identifier::Id};
-use crate::frame::CanMessage;
-use rs_can::error::CanError;
+use iso15765_2::can::{CAN_FRAME_MAX_SIZE, Direct, Frame, Id};
+use rs_can::CanError;
+use crate::CanMessage;
 
 impl Into<NCTYPE_CAN_FRAME> for CanMessage {
     fn into(self) -> NCTYPE_CAN_FRAME {

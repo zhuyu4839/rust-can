@@ -11,12 +11,13 @@ repository = "https://github.com/zhuyu4839/rust-can"
 [dependencies]
 log = { workspace = true }
 thiserror = { workspace = true }
-isotp-rs = { workspace = true }
-rs-can = { version = "0.1.0-alpha0", path = "../rs-can" }
+iso15765-2 = { workspace = true }
+iso14229-1 = { workspace = true }
+rs-can = { version = "0.1.0-alpha2", path = "../rs-can" }
 
 [dev-dependencies]
 anyhow = { workspace = true }
-ecu-uds = { workspace = true }
+docan = { workspace = true }
 
 [build-dependencies]
 bindgen = "0.70"

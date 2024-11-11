@@ -1,5 +1,5 @@
 use std::time::{SystemTime, UNIX_EPOCH};
-use isotp_rs::can::DEFAULT_PADDING;
+use iso15765_2::can::DEFAULT_PADDING;
 
 /// Get system timestamp(ms)
 #[inline]

@@ -372,7 +372,7 @@ impl ZCloudApi for USBCANFDApi<'_> {}
 #[cfg(test)]
 mod tests {
     use dlopen2::symbor::{Library, SymBorApi};
-    use isotp_rs::can::{frame::Frame, identifier::Id};
+    use iso15765_2::can::{Frame, Id};
     use rs_can::utils::system_timestamp;
     use crate::TryFrom;
     use crate::can::{

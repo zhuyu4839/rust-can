@@ -1,4 +1,4 @@
-use isotp_rs::can::{IdentifierFlags, SFF_MASK, EFF_MASK, frame::{Frame, Direct}, identifier::Id};
+use iso15765_2::can::{IdentifierFlags, SFF_MASK, EFF_MASK, Frame, Direct, Id};
 use rs_can::utils::data_resize;
 use crate::can::constant::{CANFD_BRS, CANFD_ESI, ZCanFrameType};
 use crate::can::frame::NewZCanFrame;

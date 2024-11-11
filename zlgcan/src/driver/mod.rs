@@ -1,5 +1,4 @@
-use isotp_rs::can::frame::Frame;
-use isotp_rs::device::Driver;
+use iso15765_2::{can::Frame, Driver};
 use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType};
 use crate::cloud::{ZCloudGpsFrame, ZCloudServerInfo, ZCloudUserData};
 use crate::device::{DeriveInfo, Handler, ZCanDeviceType, ZChannelContext, ZDeviceInfo};

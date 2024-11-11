@@ -1,6 +1,5 @@
 use std::time::Duration;
-use isotp_rs::can::frame::Frame;
-use isotp_rs::can::identifier::Id;
+use iso15765_2::can::{Id, Frame};
 use nican::{CanMessage, NiCan};
 
 fn main() -> anyhow::Result<()> {

@@ -1,5 +1,5 @@
 use std::ffi::{c_uchar, c_uint, c_ushort};
-use isotp_rs::can::{CAN_FRAME_MAX_SIZE, CANFD_FRAME_MAX_SIZE, EFF_MASK, IdentifierFlags, SFF_MASK};
+use iso15765_2::can::{CAN_FRAME_MAX_SIZE, CANFD_FRAME_MAX_SIZE, EFF_MASK, IdentifierFlags, SFF_MASK};
 use rs_can::utils::data_resize;
 use crate::can::TIME_FLAG_VALID;
 use crate::error::ZCanError;

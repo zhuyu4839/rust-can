@@ -1,5 +1,5 @@
 use std::fmt::{Display, Formatter};
-use isotp_rs::can::{CAN_FRAME_MAX_SIZE, CANFD_FRAME_MAX_SIZE, frame::{Frame, Direct}, identifier::Id};
+use iso15765_2::can::{CAN_FRAME_MAX_SIZE, CANFD_FRAME_MAX_SIZE, Frame, Direct, Id};
 use rs_can::utils::{data_resize, system_timestamp};
 
 #[repr(C)]

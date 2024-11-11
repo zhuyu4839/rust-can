@@ -1,7 +1,6 @@
 use rs_can::utils::{data_resize, system_timestamp};
 use std::fmt::{Display, Formatter};
-use isotp_rs::can::{CAN_FRAME_MAX_SIZE, frame::{Direct, Frame}};
-use isotp_rs::can::identifier::Id;
+use iso15765_2::can::{CAN_FRAME_MAX_SIZE, Direct, Frame, Id};
 
 #[repr(C)]
 #[derive(Debug, Clone)]

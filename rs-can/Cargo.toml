@@ -1,6 +1,6 @@
 [package]
 name = "rs-can"
-version = "0.1.0-alpha1"
+version = "0.1.0-alpha2"
 edition = "2021"
 license = "GPL-3.0"
 authors = ["zhuyu <zhuyu4839@gmail.com>"]
@@ -12,7 +12,7 @@ repository = "https://github.com/zhuyu4839/rust-can"
 log = { workspace = true }
 bitflags = { workspace = true }
 thiserror = { workspace = true }
-isotp-rs = { workspace = true }
+iso15765-2 = { workspace = true }
 
 [features]
 async = []

@@ -2,25 +2,26 @@
 members = [
 #    "nican",
     "rs-can",
-    "zlgcan.new",
+#    "zlgcan.new",
     "zlgcan",
 ]
 
 resolver = "2"
 
 [workspace.dependencies]
-thiserror = "1"
+thiserror = "2"
 log = "0"
 dlopen2 = "0.7"
 bitflags = "2.6"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 dotenvy = "0.15"
-isotp-rs = { version = "0.2.1" }
+iso14229-1 = { version = "0.1.0-alpha0" }
+iso15765-2 = { version = "0.1.0-alpha0" }
 
 # dev-dependencies
 anyhow = "1"
 hex-literal = "0.4"
 bin_file = "0.1"
 crc = "3.2"
-ecu-uds = { version = "0.1.5" }
+docan = { path = "../ecu-proto-rs/crates/docan" }

@@ -1,7 +1,6 @@
 mod utils;
 
-use isotp_rs::can::frame::Frame;
-use isotp_rs::can::identifier::Id;
+use iso15765_2::can::{Frame, Id};
 use zlgcan::can::CanMessage;
 use zlgcan::driver::ZDevice;
 use crate::utils::{init_device, CHANNEL};

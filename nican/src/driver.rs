@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 use std::ffi::{c_char, c_void, CStr, CString};
-use isotp_rs::can::frame::Frame;
-use isotp_rs::device::Driver;
+use iso15765_2::{can::Frame, device::Driver};
 use rs_can::CanFilter;
 use rs_can::error::CanError;
 use crate::api::*;
 use crate::constant;
-use crate::frame::CanMessage;
+use crate::CanMessage;
 
 #[derive(Debug, Clone)]
 struct NiCanContext {
@@ -314,11 +313,9 @@ impl Driver for NiCan {
 #[cfg(test)]
 mod tests {
     use super::NiCan;
-    use crate::frame::CanMessage;
+    use crate::CanMessage;
     use std::time::Duration;
-    use isotp_rs::can::{frame::Frame, identifier::Id};
-    use isotp_rs::can::driver::SyncCan;
-    use isotp_rs::device::Driver;
+    use iso15765_2::{can::{{Frame, Id}, driver::SyncCan}, device::Driver};
 
     #[ignore]   // device required
     #[test]
