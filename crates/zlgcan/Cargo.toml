@@ -1,6 +1,6 @@
 [package]
 name = "zlgcan"
-version = "0.1.0-alpha8"
+version = "0.1.0-alpha9"
 edition = "2021"
 authors = ["zhuyu <zhuyu4839@gmail.com>"]
 license = "GPL-3.0"
