@@ -1,6 +1,6 @@
 [package]
 name = "zlgcan"
-version = "0.1.0-alpha6"
+version = "0.1.0-alpha7"
 edition = "2021"
 authors = ["zhuyu <zhuyu4839@gmail.com>"]
 license = "GPL-3.0"
@@ -17,7 +17,7 @@ dotenvy = { workspace = true }
 dlopen2 = { workspace = true }
 iso14229-1 = { workspace = true }
 iso15765-2 = { workspace = true }
-rs-can = { version = "0.1.0-alpha2", path = "../rs-can" }
+rs-can = { version = "0.1.0-alpha2" }
 
 [dev-dependencies]
 anyhow = { workspace = true }
