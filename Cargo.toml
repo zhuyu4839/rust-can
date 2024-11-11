@@ -1,9 +1,9 @@
 [workspace]
 members = [
-#    "nican",
-    "rs-can",
+#    "crates/nican",
+    "crates/rs-can",
 #    "zlgcan.new",
-    "zlgcan",
+    "crates/zlgcan",
 ]
 
 resolver = "2"
@@ -18,10 +18,11 @@ serde_yaml = "0.9"
 dotenvy = "0.15"
 iso14229-1 = { version = "0.1.0-alpha0" }
 iso15765-2 = { version = "0.1.0-alpha0" }
+rs-can = { path = "crates/rs-can" }
 
 # dev-dependencies
 anyhow = "1"
 hex-literal = "0.4"
 bin_file = "0.1"
 crc = "3.2"
-docan = { path = "../ecu-proto-rs/crates/docan" }
+docan = { version = "0.1.0-alpha0" }

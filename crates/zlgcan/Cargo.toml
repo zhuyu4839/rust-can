@@ -17,7 +17,7 @@ dotenvy = { workspace = true }
 dlopen2 = { workspace = true }
 iso14229-1 = { workspace = true }
 iso15765-2 = { workspace = true }
-rs-can = { version = "0.1.0-alpha2" }
+rs-can = { workspace = true }
 
 [dev-dependencies]
 anyhow = { workspace = true }
