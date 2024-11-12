@@ -143,7 +143,7 @@ impl Frame for CanMessage {
 
     #[inline]
     fn set_bitrate_switch(&mut self, value: bool) -> &mut Self where Self: Sized {
-        self.is_error_frame = value;
+        self.bitrate_switch = value;
         self
     }
 
