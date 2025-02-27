@@ -1,9 +1,9 @@
 [workspace]
 members = [
-#    "crates/nican",
-    "crates/rs-can",
-#    "zlgcan.new",
-    "crates/zlgcan",
+    "rs-can",
+#    "nican",    # only on 32bit Windows
+#    "socan",    # only on Linux
+    "zlgcan",
 ]
 
 resolver = "2"
@@ -16,13 +16,15 @@ bitflags = "2.6"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 dotenvy = "0.15"
-iso14229-1 = { version = "0.1.0-alpha0" }
-iso15765-2 = { version = "0.1.0-alpha0" }
-rs-can = { path = "crates/rs-can" }
+hex = "0.4"
+
+rs-can = { path = "rs-can" }
+iso15765-2 = "0.1.0-alpha1"
+iso14229-1 = "0.1.0-alpha1"
 
 # dev-dependencies
 anyhow = "1"
-hex-literal = "0.4"
+hex-literal = "1"
 bin_file = "0.1"
 crc = "3.2"
-docan = { version = "0.1.0-alpha0" }
+docan = "0.1.0-alpha1"

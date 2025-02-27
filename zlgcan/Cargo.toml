@@ -1,0 +1,26 @@
+[package]
+name = "zlgcan"
+version = "0.1.0-beta1"
+edition = "2021"
+license = "MIT OR GPL-3.0"
+authors = ["zhuyu <zhuyu4839@gmail.com>"]
+description = "A Cross-platform ZLGCAN driver."
+homepage = "https://github.com/zhuyu4839/rust-can"
+repository = "https://github.com/zhuyu4839/rust-can"
+
+[dependencies]
+log = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_yaml = { workspace = true }
+dotenvy = { workspace = true }
+dlopen2 = { workspace = true }
+rs-can = { workspace = true }
+
+[dev-dependencies]
+anyhow = { workspace = true }
+hex = { workspace = true }
+bin_file = { workspace = true }
+crc = { workspace = true }
+iso14229-1 = { workspace = true }
+docan = { workspace = true }

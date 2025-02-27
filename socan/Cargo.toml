@@ -1,0 +1,25 @@
+[package]
+name = "socan"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR GPL-3.0"
+authors = ["zhuyu <zhuyu4839@gmail.com>"]
+description = "SocketCAN driver with UDS protocol."
+homepage = "https://github.com/zhuyu4839/rust-can"
+repository = "https://github.com/zhuyu4839/rust-can"
+
+keywords = [
+    "SocketCAN",
+    "UDS"
+]
+
+[dependencies]
+log = { workspace = true }
+libc = "0.2"
+nix = { version="0.29", features = ["poll", "process", "net"] }
+rs-can = { workspace = true }
+
+[dev-dependencies]
+anyhow = { workspace = true }
+iso14229-1 = { workspace = true }
+docan = { workspace = true }
