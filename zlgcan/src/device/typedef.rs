@@ -169,7 +169,7 @@ impl TryFrom<u32> for ZCanDeviceType {
         unsafe {
             let vk: *mut ZCanDeviceType = std::alloc::alloc(layout).cast();
             if vk.is_null() {
-                Err(CanError::OtherError("method not supported".to_owned()))
+                Err(CanError::NotImplementedError)
             }
             else {
                 let ptr = vk as *mut u32;

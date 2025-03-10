@@ -86,7 +86,7 @@ impl ZDeviceApi for USBCANFDApi<'_> {
         let (dev_type, dev_idx) = (context.device_type(), context.device_index());
         match unsafe { (self.VCI_OpenDevice)(dev_type as u32, dev_idx, 0) } {
             Self::STATUS_OK => Ok(()),
-            code => Err(CanError::OtherError(format!("`VCI_OpenDevice` ret: {}", code))),
+            code => Err(CanError::OperationError(format!("`VCI_OpenDevice` ret: {}", code))),
         }
     }
 
@@ -94,7 +94,7 @@ impl ZDeviceApi for USBCANFDApi<'_> {
         let (dev_type, dev_idx) = (context.device_type(), context.device_index());
         match unsafe { (self.VCI_CloseDevice)(dev_type as u32, dev_idx) } {
             Self::STATUS_OK => Ok(()),
-            code => Err(CanError::OtherError(format!("`VCI_CloseDevice` ret: {}", code))),
+            code => Err(CanError::OperationError(format!("`VCI_CloseDevice` ret: {}", code))),
         }
     }
 
@@ -103,17 +103,17 @@ impl ZDeviceApi for USBCANFDApi<'_> {
         let mut info = ZDeviceInfo::default();
         match unsafe { (self.VCI_ReadBoardInfo)(dev_type as u32, dev_idx, &mut info) } {
             Self::STATUS_OK => Ok(info),
-            code => Err(CanError::OtherError(format!("`VCI_ReadBoardInfo` ret: {}", code))),
+            code => Err(CanError::OperationError(format!("`VCI_ReadBoardInfo` ret: {}", code))),
         }
     }
 
     fn set_reference(&self, context: &ZChannelContext, cmd_path: &CmdPath, value: *const c_void) -> Result<(), CanError> {
         let (dev_type, dev_idx, channel) = (context.device_type(), context.device_index(), context.channel());
         let cmd = cmd_path.get_reference();
-        // let _value = CString::new(value).map_err(|e| CanError::CStringConvertFailed(e.to_string()))?;
+        // let _value = CString::new(value).map_err(|e| CanError::OtherError(e.to_string()))?;
         match unsafe { (self.VCI_SetReference)(dev_type as u32, dev_idx, channel as u32, cmd, value) } {
             Self::STATUS_OK => Ok(()),
-            code => Err(CanError::OtherError(format!("`VCI_SetReference` ret: {}", code))),
+            code => Err(CanError::OperationError(format!("`VCI_SetReference` ret: {}", code))),
         }
     }
 
@@ -122,7 +122,7 @@ impl ZDeviceApi for USBCANFDApi<'_> {
         let cmd = cmd_path.get_reference();
         match unsafe { (self.VCI_GetReference)(dev_type as u32, dev_idx, channel as u32, cmd, value) } {
             Self::STATUS_OK => Ok(()),
-            code => Err(CanError::OtherError(format!("`VCI_GetReference` ret: {}", code))),
+            code => Err(CanError::OperationError(format!("`VCI_GetReference` ret: {}", code))),
         }
     }
 
@@ -138,7 +138,7 @@ impl ZDeviceApi for USBCANFDApi<'_> {
             Ok(ret.as_ptr() as *const c_void)
         }
         else {
-            Err(CanError::OtherError("method not supported".to_owned()))
+            Err(CanError::NotImplementedError)
         }
     }
 
@@ -374,8 +374,7 @@ impl ZCloudApi for USBCANFDApi<'_> {}
 #[cfg(test)]
 mod tests {
     use dlopen2::symbor::{Library, SymBorApi};
-    use rs_can::{CanError, Frame, Id};
-    use rs_can::utils::system_timestamp;
+    use rs_can::{CanError, CanFrame, CanId};
     use crate::TryFrom;
     use crate::can::{
         ZCanChlMode, ZCanChlType,

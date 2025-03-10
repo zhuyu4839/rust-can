@@ -7,7 +7,7 @@
 // include!(concat!(env!("OUT_DIR"), "/nican.rs"));
 include!("generator/nican.rs");
 
-use rs_can::{CanError, Direct, Frame, Id, CAN_FRAME_MAX_SIZE};
+use rs_can::{CanError, CanDirect, CanFrame, CanId, MAX_FRAME_SIZE};
 use crate::CanMessage;
 
 impl Into<NCTYPE_CAN_FRAME> for CanMessage {
@@ -19,8 +19,8 @@ impl Into<NCTYPE_CAN_FRAME> for CanMessage {
 
         let data_len = self.data().len() as u8;
         let mut data = self.data().to_vec();
-        if data.len() < CAN_FRAME_MAX_SIZE {
-            data.resize(CAN_FRAME_MAX_SIZE, Default::default());
+        if data.len() < MAX_FRAME_SIZE {
+            data.resize(MAX_FRAME_SIZE, Default::default());
         }
 
         NCTYPE_CAN_FRAME {
@@ -45,13 +45,13 @@ impl TryInto<CanMessage> for NCTYPE_CAN_STRUCT {
         let timestamp = (self.Timestamp.HighPart as u64) << 32 | (self.Timestamp.LowPart as u64);
 
         let mut msg = if is_remote_frame {
-            CanMessage::new_remote(Id::from_bits(arb_id, is_extended), dlc as usize)
+            CanMessage::new_remote(CanId::from_bits(arb_id, Some(is_extended)), dlc as usize)
         } else {
-            CanMessage::new(Id::from_bits(arb_id, is_extended), self.Data.as_slice())
+            CanMessage::new(CanId::from_bits(arb_id, Some(is_extended)), self.Data.as_slice())
         }
-            .ok_or(CanError::FrameConvertFailed(format!("length of data is rather than {}", CAN_FRAME_MAX_SIZE)))?;
+            .ok_or(CanError::OtherError(format!("length of data is rather than {}", MAX_FRAME_SIZE)))?;
 
-        msg.set_direct(Direct::Receive)
+        msg.set_direct(CanDirect::Receive)
             .set_timestamp(Some(
                 (1000. * (timestamp as f64 / 10000000. - 11644473600.)) as u64,
             ))

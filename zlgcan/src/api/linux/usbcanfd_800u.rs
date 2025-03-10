@@ -246,7 +246,7 @@ impl ZDeviceApi for USBCANFD800UApi<'_> {
                     });
                     Ok(())
                 },
-                None => Err(CanError::OtherError("method not supported".to_owned())),
+                None => Err(CanError::NotImplementedError),
             }
         }
     }
@@ -273,7 +273,7 @@ impl ZDeviceApi for USBCANFD800UApi<'_> {
 
                     Ok(result)
                 },
-                None => Err(CanError::OtherError("method not supported".to_owned())),
+                None => Err(CanError::NotImplementedError),
             }
         }
     }

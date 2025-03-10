@@ -1,4 +1,4 @@
-use rs_can::{CanDriver, CanError, Frame};
+use rs_can::{CanDevice, CanError, CanFrame, CanResult};
 use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType};
 use crate::cloud::{ZCloudGpsFrame, ZCloudServerInfo, ZCloudUserData};
 use crate::device::{DeriveInfo, Handler, ZCanDeviceType, ZChannelContext, ZDeviceInfo};
@@ -14,7 +14,7 @@ mod linux;
 #[cfg(target_os = "linux")]
 pub use linux::ZCanDriver;
 
-impl CanDriver for ZCanDriver {
+impl CanDevice for ZCanDriver {
     type Channel = u8;
     type Frame = CanMessage;
 
@@ -29,7 +29,7 @@ impl CanDriver for ZCanDriver {
         }
     }
 
-    fn transmit(&self, msg: Self::Frame, _: Option<u32>) -> Result<(), CanError> {
+    fn transmit(&self, msg: Self::Frame, _: Option<u32>) -> CanResult<(), CanError> {
         let channel = msg.channel();
         if msg.is_can_fd() {
             self.transmit_canfd(channel, vec![msg, ])?;
@@ -41,7 +41,7 @@ impl CanDriver for ZCanDriver {
         Ok(())
     }
 
-    fn receive(&self, channel: Self::Channel, timeout: Option<u32>) -> Result<Vec<Self::Frame>, CanError> {
+    fn receive(&self, channel: Self::Channel, timeout: Option<u32>) -> CanResult<Vec<Self::Frame>, CanError> {
         let mut results: Vec<CanMessage> = Vec::new();
 
         let count_can = self.get_can_num(channel, ZCanFrameType::CAN)?;
@@ -80,7 +80,7 @@ pub trait ZDevice {
     fn device_info(&self) -> Result<&ZDeviceInfo, CanError>;
     fn is_derive_device(&self) -> bool;
     fn is_online(&self) -> Result<bool, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn init_can_chl(&mut self, cfg: Vec<CanChlCfg>) -> Result<(), CanError>;
     fn reset_can_chl(&mut self, channel: u8) -> Result<(), CanError>;
@@ -92,66 +92,66 @@ pub trait ZDevice {
     fn receive_can(&self, channel: u8, size: u32, timeout: Option<u32>) -> Result<Vec<CanMessage>, CanError>;
     fn transmit_can(&self, channel: u8, frames: Vec<CanMessage>) -> Result<u32, CanError>;
     fn receive_canfd(&self, channel: u8, size: u32, timeout: Option<u32>) -> Result<Vec<CanMessage>, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn transmit_canfd(&self, channel: u8, frames: Vec<CanMessage>) -> Result<u32, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn init_lin_chl(&mut self, cfg: Vec<ZLinChlCfg>) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn reset_lin_chl(&mut self, channel: u8) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn clear_lin_buffer(&self, channel: u8) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn get_lin_num(&self, channel: u8) -> Result<u32, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn receive_lin(&self, channel: u8, size: u32, timeout: Option<u32>) -> Result<Vec<ZLinFrame>, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn transmit_lin(&self, channel: u8, frames: Vec<ZLinFrame>) -> Result<u32, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn set_lin_subscribe(&self, channel: u8, cfg: Vec<ZLinSubscribe>) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn set_lin_publish(&self, channel: u8, cfg: Vec<ZLinPublish>) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn set_lin_publish_ext(&self, channel: u8, cfg: Vec<ZLinPublishEx>) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn wakeup_lin(&self, channel: u8) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     #[deprecated(since = "0.1.0", note = "This method is deprecated!")]
     fn set_lin_slave_msg(&self, channel: u8, msg: Vec<ZLinFrame>) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     #[deprecated(since = "0.1.0", note = "This method is deprecated!")]
     fn clear_lin_slave_msg(&self, channel: u8, pids: Vec<u8>) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn set_server(&self, server: ZCloudServerInfo) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn connect_server(&self, username: &str, password: &str) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn is_connected_server(&self) -> Result<bool, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn disconnect_server(&self) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn get_userdata(&self, update: Option<i32>) -> Result<ZCloudUserData, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn receive_gps(&self, size: u32, timeout: Option<u32>) -> Result<Vec<ZCloudGpsFrame>, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn timestamp(&self, channel: u8) -> Result<u64, CanError>;
     fn device_handler<C, T>(&self, callback: C) -> Result<T, CanError>
@@ -164,7 +164,7 @@ pub trait ZDevice {
         self.device_handler(|hdl| -> Result<T, CanError> {
             match hdl.find_can(channel) {
                 Some(context) => callback(context),
-                None => Err(CanError::ChannelNotOpened(channel.to_string())),
+                None => Err(CanError::OperationError(channel.to_string())),
             }
         })
     }
@@ -176,7 +176,7 @@ pub trait ZDevice {
         self.device_handler(|hdl| -> Result<T, CanError> {
             match hdl.lin_channels().get(&channel) {
                 Some(chl) => callback(chl),
-                None => Err(CanError::ChannelNotOpened(channel.to_string())),
+                None => Err(CanError::OperationError(channel.to_string())),
             }
         })
     }

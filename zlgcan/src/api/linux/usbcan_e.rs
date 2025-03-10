@@ -103,7 +103,7 @@ impl USBCANEApi<'_> {
 
         match unsafe { (self.ZCAN_StartCAN)(chl_hdl) as u32 } {
             Self::STATUS_OK => Ok(context),
-            code => Err(CanError::OtherError(format!("`ZCAN_StartCAN` ret: {}", code))),
+            code => Err(CanError::OperationError(format!("`ZCAN_StartCAN` ret: {}", code))),
         }
     }
 
@@ -114,14 +114,14 @@ impl USBCANEApi<'_> {
         cfg: &CanChlCfg
     ) -> Result<(), CanError> {
         unsafe {
-            let func = func.ok_or(CanError::OtherError("method not supported".to_owned()))?;
+            let func = func.ok_or(CanError::OperationError("method not supported".to_owned()))?;
             let cmd_path = CString::new(channel_bitrate(channel))
                 .map_err(|e| CanError::OtherError(e.to_string()))?;
             let bitrate = CString::new(cfg.bitrate().to_string())
                 .map_err(|e| CanError::OtherError(e.to_string()))?;
             match func(cmd_path.as_ptr(), bitrate.as_ptr()) as u32 {
                 Self::STATUS_OK => Ok(()),
-                code => Err(CanError::OtherError(format!("{:?}, SetValue failed ret: {}", cmd_path, code))),
+                code => Err(CanError::OperationError(format!("{:?}, SetValue failed ret: {}", cmd_path, code))),
             }?;
 
             let cmd_path = CString::new(channel_work_mode(channel))
@@ -130,7 +130,7 @@ impl USBCANEApi<'_> {
                 .map_err(|e| CanError::OtherError(e.to_string()))?;
             match func(cmd_path.as_ptr(), mode.as_ptr()) as u32 {
                 Self::STATUS_OK => Ok(()),
-                code => Err(CanError::OtherError(format!("{:?}, SetValue failed ret: {}", cmd_path, code))),
+                code => Err(CanError::OperationError(format!("{:?}, SetValue failed ret: {}", cmd_path, code))),
             }
         }
     }
@@ -138,7 +138,7 @@ impl USBCANEApi<'_> {
     fn self_get_property(&self, context: &ZDeviceContext) -> Result<IProperty, CanError> {
         let ret = unsafe { (self.GetIProperty)(context.device_handler()?) };
         if ret.is_null() {
-            Err(CanError::OtherError(format!("`GetIProperty` ret: {}", 0)))
+            Err(CanError::OperationError(format!("`GetIProperty` ret: {}", 0)))
         }
         else {
             unsafe { Ok(*ret) }
@@ -150,7 +150,7 @@ impl ZDeviceApi for USBCANEApi<'_> {
     fn open(&self, context: &mut ZDeviceContext) -> Result<(), CanError> {
         let (dev_type, dev_idx) = (context.device_type(), context.device_index());
         match unsafe { (self.ZCAN_OpenDevice)(dev_type as u32, dev_idx, 0) } as u32 {
-            Self::INVALID_DEVICE_HANDLE => Err(CanError::OtherError(format!("`ZCAN_OpenDevice` ret: {}", Self::INVALID_DEVICE_HANDLE))),
+            Self::INVALID_DEVICE_HANDLE => Err(CanError::OperationError(format!("`ZCAN_OpenDevice` ret: {}", Self::INVALID_DEVICE_HANDLE))),
             handler => {
                 context.set_device_handler(handler);
                 Ok(())
@@ -161,7 +161,7 @@ impl ZDeviceApi for USBCANEApi<'_> {
     fn close(&self, context: &ZDeviceContext) -> Result<(), CanError> {
         match unsafe { (self.ZCAN_CloseDevice)(context.device_handler()?) } as u32 {
             Self::STATUS_OK => Ok(()),
-            code => Err(CanError::OtherError(format!("ZCAN_CloseDevice ret: {}", code))),
+            code => Err(CanError::OperationError(format!("ZCAN_CloseDevice ret: {}", code))),
         }
     }
 
@@ -169,7 +169,7 @@ impl ZDeviceApi for USBCANEApi<'_> {
         let mut info = ZDeviceInfo::default();
         match unsafe { (self.ZCAN_GetDeviceInf)(context.device_handler()?, &mut info) } as u32 {
             Self::STATUS_OK => Ok(info),
-            code => Err(CanError::OtherError(format!("ZCAN_GetDeviceInf ret: {}", code))),
+            code => Err(CanError::OperationError(format!("ZCAN_GetDeviceInf ret: {}", code))),
         }
     }
 
@@ -180,7 +180,7 @@ impl ZDeviceApi for USBCANEApi<'_> {
     fn release_property(&self, p: &IProperty) -> Result<(), CanError> {
         match unsafe { (self.ReleaseIProperty)(p) } {
             Self::STATUS_OK => Ok(()),
-            code => Err(CanError::OtherError(format!("`ReleaseIProperty` ret: {}", code))),
+            code => Err(CanError::OperationError(format!("`ReleaseIProperty` ret: {}", code))),
         }
     }
 }

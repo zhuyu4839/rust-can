@@ -18,34 +18,34 @@ pub trait ZDeviceApi {
     fn close(&self, context: &ZDeviceContext) -> Result<(), CanError>;
     fn read_device_info(&self, context: &ZDeviceContext) -> Result<ZDeviceInfo, CanError>;
     fn is_online(&self, context: &ZDeviceContext) -> Result<bool, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn get_property(&self, context: &ZChannelContext) -> Result<IProperty, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn release_property(&self, p: &IProperty) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn set_reference(&self, context: &ZChannelContext, cmd_path: &CmdPath, value: *const c_void) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn get_reference(&self, context: &ZChannelContext, cmd_path: &CmdPath, value: *mut c_void) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn set_value(&self, context: &ZChannelContext, cmd_path: &CmdPath, value: *const c_void) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn get_value(&self, context: &ZChannelContext, cmd_path: &CmdPath) -> Result<*const c_void, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn set_values(&self, context: &ZChannelContext, values: Vec<(CmdPath, *const c_char)>) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn get_values(&self, context: &ZChannelContext, paths: Vec<CmdPath>) -> Result<Vec<String>, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn debug(&self, level: u32) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
 }
 
@@ -62,26 +62,26 @@ pub trait ZCanApi {
     fn receive_can(&self, context: &ZChannelContext, size: u32, timeout: u32, resize: impl Fn(&mut Vec<Self::Frame>, usize)) -> Result<Vec<Self::Frame>, CanError>;
     fn transmit_can(&self, context: &ZChannelContext, frames: Vec<Self::Frame>) -> Result<u32, CanError>;
     fn receive_canfd(&self, context: &ZChannelContext, size: u32, timeout: u32, resize: fn(&mut Vec<Self::FdFrame>, usize)) -> Result<Vec<Self::FdFrame>, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn transmit_canfd(&self, context: &ZChannelContext, frames: Vec<Self::FdFrame>) -> Result<u32, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
 }
 
 #[allow(unused_variables, dead_code)]
 pub trait ZLinApi {
     fn init_lin_chl(&self, context: &mut ZChannelContext, cfg: &ZLinChlCfg) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn reset_lin_chl(&self, context: &ZChannelContext) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn clear_lin_buffer(&self, context: &ZChannelContext) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn get_lin_num(&self, context: &ZChannelContext) -> Result<u32, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn receive_lin(
         &self,
@@ -90,49 +90,49 @@ pub trait ZLinApi {
         timeout: u32,
         resize: impl Fn(&mut Vec<ZLinFrame>, usize)
     ) -> Result<Vec<ZLinFrame>, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn transmit_lin(&self, context: &ZChannelContext, frames: Vec<ZLinFrame>) -> Result<u32, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn set_lin_subscribe(&self, context: &ZChannelContext, cfg: Vec<ZLinSubscribe>)-> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn set_lin_publish(&self, context: &ZChannelContext, cfg: Vec<ZLinPublish>) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn wakeup_lin(&self, context: &ZChannelContext) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn set_lin_publish_ex(&self, context: &ZChannelContext, cfg: Vec<ZLinPublishEx>) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     #[deprecated(since="0.1.0", note="This method is deprecated!")]
     fn set_lin_slave_msg(&self, context: &ZChannelContext, msg: Vec<ZLinFrame>) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     #[deprecated(since="0.1.0", note="This method is deprecated!")]
     fn clear_lin_slave_msg(&self, context: &ZChannelContext, pids: Vec<u8>) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
 }
 
 #[allow(unused_variables, dead_code)]
 pub trait ZCloudApi {
     fn set_server(&self, server: ZCloudServerInfo) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn connect_server(&self, username: &str, password: &str) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn is_connected_server(&self) -> Result<bool, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn disconnect_server(&self) -> Result<(), CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn get_userdata(&self, update: i32) -> Result<ZCloudUserData, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
     fn receive_gps(
         &self,
@@ -141,7 +141,7 @@ pub trait ZCloudApi {
         timeout: u32,
         resize: impl Fn(&mut Vec<ZCloudGpsFrame>, usize)
     ) -> Result<Vec<ZCloudGpsFrame>, CanError> {
-        Err(CanError::OtherError("method not supported".to_owned()))
+        Err(CanError::NotImplementedError)
     }
 }
 

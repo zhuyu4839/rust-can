@@ -1,16 +1,10 @@
-//! **`rs-can`**, A unified CAN driver, just like [python-can](https://github.com/hardbyte/python-can)
-
 mod constants;
-pub use constants::*;
 mod device;
-pub use device::*;
-mod driver;
-pub use driver::*;
-mod frame;
-pub use frame::*;
-#[cfg(any(feature = "isotp-std2004", feature = "isotp-std2016"))]
-pub mod isotp;
-
 mod error;
-pub use error::*;
+mod frame;
+
+pub use crate::constants::*;
+pub use crate::device::{Device as CanDevice, Listener as CanListener, CanResult};
+pub use crate::error::{Error as CanError};
+pub use crate::frame::{Direct as CanDirect, Frame as CanFrame, Id as CanId, Filter as CanFilter, IdentifierFlags};
 pub mod utils;

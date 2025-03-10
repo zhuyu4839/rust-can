@@ -99,15 +99,15 @@ impl TryFrom<&HashMap<String, u32>> for ZCanFdChlCfgSet {
     type Error = CanError;
     fn try_from(value: &HashMap<String, u32>) -> Result<Self, Self::Error> {
         let tseg1 = value.get(TSEG1)
-            .ok_or(CanError::DeviceConfigError(format!("`{}` is not configured in file!", TSEG1)))?;
+            .ok_or(CanError::OtherError(format!("`{}` is not configured in file!", TSEG1)))?;
         let tseg2 = value.get(TSEG2)
-            .ok_or(CanError::DeviceConfigError(format!("ZLGCAN - `{}` is not configured in file!", TSEG2)))?;
+            .ok_or(CanError::OtherError(format!("ZLGCAN - `{}` is not configured in file!", TSEG2)))?;
         let sjw = value.get(SJW)
-            .ok_or(CanError::DeviceConfigError(format!("ZLGCAN - `{}` is not configured in file!", SJW)))?;
+            .ok_or(CanError::OtherError(format!("ZLGCAN - `{}` is not configured in file!", SJW)))?;
         let smp = value.get(SMP)
-            .ok_or(CanError::DeviceConfigError(format!("ZLGCAN - `{}` is not configured in file!", SMP)))?;
+            .ok_or(CanError::OtherError(format!("ZLGCAN - `{}` is not configured in file!", SMP)))?;
         let brp = value.get(BRP)
-            .ok_or(CanError::DeviceConfigError(format!("ZLGCAN - `{}` is not configured in file!", BRP)))?;
+            .ok_or(CanError::OtherError(format!("ZLGCAN - `{}` is not configured in file!", BRP)))?;
 
         Ok(Self::new(*tseg1, *tseg2, *sjw, *smp, *brp))
     }

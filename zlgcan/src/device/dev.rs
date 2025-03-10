@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::ffi::{c_uchar, c_ushort, CString};
 use std::fmt::{Display, Formatter};
 use rs_can::CanError;
-use rs_can::utils::system_timestamp;
 use crate::device::{DeriveInfo, ZCanDeviceType};
 
 #[repr(C)]
@@ -148,7 +147,7 @@ impl ZDeviceContext {
     }
     #[inline]
     pub fn device_handler(&self) -> Result<u32, CanError> {
-        self.dev_hdl.ok_or(CanError::DeviceNotOpened)
+        self.dev_hdl.ok_or(CanError::OperationError("device is not opened".to_string()))
     }
     #[inline]
     pub fn set_device_handler(&mut self, handler: u32) {
@@ -191,11 +190,11 @@ impl ZChannelContext {
     }
     #[inline]
     pub fn channel_handler(&self) -> Result<u32, CanError> {
-        self.chl_hdl.ok_or(CanError::ChannelNotOpened(self.channel.to_string()))
+        self.chl_hdl.ok_or(CanError::OperationError(format!("channel: {} is not opened", self.channel)))
     }
     #[inline]
     pub fn set_channel_handler(&mut self, handler: Option<u32>) {
-        self.timestamp = system_timestamp();
+        // self.timestamp = system_timestamp();
         self.chl_hdl = handler;
     }
     #[inline]

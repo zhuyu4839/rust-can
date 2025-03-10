@@ -6,7 +6,7 @@ use zlgcan::device::ZCanDeviceType;
 use zlgcan::driver::{ZCanDriver, ZDevice};
 use docan::{Client, DoCanError, DoCanClient, DoCanServer};
 use iso14229_1::{AddressAndLengthFormatIdentifier, RoutineCtrlType, TesterPresentType};
-use rs_can::{CanError, isotp::{Address, AddressType, IsoTpAdapter}};
+use rs_can::{CanError};
 
 pub const CHANNEL: u8 = 0;
 
@@ -26,48 +26,48 @@ pub fn init_device() -> Result<ZCanDriver, CanError> {
     Ok(device)
 }
 
-pub fn init_client() -> Result<(
-    IsoTpAdapter<ZCanDriver, u8, CanMessage>,
-    DoCanClient<ZCanDriver, u8, CanMessage>,
-), DoCanError> {
-    let driver = init_device()
-        .map_err(DoCanError::DeviceError)?;
-    std::thread::sleep(std::time::Duration::from_millis(100));
-    let mut adapter = IsoTpAdapter::new(driver);
-
-    let mut client = DoCanClient::new(adapter.clone(), Some(200));
-    client.init_channel(CHANNEL, Address {
-        tx_id: 0x7E0,
-        rx_id: 0x7E8,
-        fid: 0x7DF,
-    })?;
-
-    // let algo = Arc::new(Box::new(uds_security_algo));
-
-    adapter.start(100);
-
-    Ok((adapter, client))
-}
-
-pub fn init_server() -> Result<(
-    IsoTpAdapter<ZCanDriver, u8, CanMessage>,
-    DoCanServer<ZCanDriver, u8, CanMessage>,
-), DoCanError> {
-    let driver = init_device()
-        .map_err(DoCanError::DeviceError)?;
-    std::thread::sleep(std::time::Duration::from_millis(100));
-    let mut adapter = IsoTpAdapter::new(driver);
-
-    let server = DoCanServer::new(adapter.clone(), 0, Address {
-        tx_id: 0x7E8,
-        rx_id: 0x7E0,
-        fid: 0x7DF,
-    });
-
-    adapter.start(100);
-
-    Ok((adapter, server))
-}
+// pub fn init_client() -> Result<(
+//     IsoTpAdapter<ZCanDriver, u8, CanMessage>,
+//     DoCanClient<ZCanDriver, u8, CanMessage>,
+// ), DoCanError> {
+//     let driver = init_device()
+//         .map_err(DoCanError::DeviceError)?;
+//     std::thread::sleep(std::time::Duration::from_millis(100));
+//     let mut adapter = IsoTpAdapter::new(driver);
+//
+//     let mut client = DoCanClient::new(adapter.clone(), Some(200));
+//     client.init_channel(CHANNEL, Address {
+//         tx_id: 0x7E0,
+//         rx_id: 0x7E8,
+//         fid: 0x7DF,
+//     })?;
+//
+//     // let algo = Arc::new(Box::new(uds_security_algo));
+//
+//     adapter.start(100);
+//
+//     Ok((adapter, client))
+// }
+//
+// pub fn init_server() -> Result<(
+//     IsoTpAdapter<ZCanDriver, u8, CanMessage>,
+//     DoCanServer<ZCanDriver, u8, CanMessage>,
+// ), DoCanError> {
+//     let driver = init_device()
+//         .map_err(DoCanError::DeviceError)?;
+//     std::thread::sleep(std::time::Duration::from_millis(100));
+//     let mut adapter = IsoTpAdapter::new(driver);
+//
+//     let server = DoCanServer::new(adapter.clone(), 0, Address {
+//         tx_id: 0x7E8,
+//         rx_id: 0x7E0,
+//         fid: 0x7DF,
+//     });
+//
+//     adapter.start(100);
+//
+//     Ok((adapter, server))
+// }
 
 pub fn uds_flash_file(
     filepath: &str,

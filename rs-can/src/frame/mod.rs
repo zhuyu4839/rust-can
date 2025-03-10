@@ -4,11 +4,20 @@ pub use identifier::*;
 use std::fmt::{Display, Formatter, Write};
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Default)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Direct {
     #[default]
     Transmit,
     Receive,
+}
+
+impl Display for Direct {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Transmit => f.write_str("Tx"),
+            Self::Receive => f.write_str("Rx"),
+        }
+    }
 }
 
 /// CAN 2.0 | CAN 1.0
@@ -22,14 +31,6 @@ pub trait Frame: Send + Sync {
     fn new_remote(id: impl Into<Id>, len: usize) -> Option<Self>
     where
         Self: Sized;
-
-    #[cfg(any(feature = "isotp-std2004", feature = "isotp-std2016"))]
-    fn from_iso_tp(id: impl Into<Id>, frame: crate::isotp::IsoTpFrame, padding: Option<u8>) -> Option<Self>
-    where
-        Self: Sized {
-        let data = frame.encode(padding);
-        Self::new(id, data.as_slice())
-    }
 
     fn timestamp(&self) -> u64;
 
@@ -109,7 +110,7 @@ impl<T: Display> Display for dyn Frame<Channel = T> {
             write!(f, "{:.3} CANFD {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
                    self.timestamp() as f64 / 1000.,
                    self.channel(),
-                   direct(self.direct()),
+                   self.direct(),
                    // if self.is_rx() { "Rx" } else { "Tx" },
                    format!("{: >8x}", self.id().into_bits()),
                    if self.is_bitrate_switch() {
@@ -139,20 +140,12 @@ impl<T: Display> Display for dyn Frame<Channel = T> {
                    self.channel(),
                    format!("{: >8x}", self.id().into_bits()),
                    if self.is_extended() { "x" } else { "" },
-                   direct(self.direct()),
+                   self.direct(),
                    // if self.is_rx() { "Rx" } else { "Tx" },
                    if self.is_remote() { "r" } else { "d" },
                    format!("{: >2}", self.length()),
                    data_str,
             )
         }
-    }
-}
-
-#[inline]
-fn direct<'a>(direct: Direct) -> &'a str {
-    match direct {
-        Direct::Transmit => "Tx",
-        Direct::Receive => "Rx",
     }
 }

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::ffi::{c_char, c_void, CStr, CString};
 use winapi::{shared::minwindef::HMODULE, um::{errhandlingapi::GetLastError, libloaderapi::{LoadLibraryA, GetProcAddress}, winnt::LPCSTR}};
-use rs_can::{CanDriver, CanError, CanFilter, Frame};
+use rs_can::{CanDevice, CanError, CanFilter, CanFrame, CanResult};
 use crate::{api::*, CanMessage, constant};
 
 #[derive(Debug, Clone)]
@@ -38,7 +38,9 @@ impl NiCan {
             let dll = LoadLibraryA(dll_cstr.as_ptr() as LPCSTR);
             if dll.is_null() {
                 let code = GetLastError();
-                return Err(CanError::DeviceConfigError(format!("Can't load library: {} code: {}", dll_path, code)));
+                return Err(CanError::InitializeError(
+                    format!("Can't load library: {} code: {}", dll_path, code)
+                ));
             }
 
             Ok(Self {
@@ -99,13 +101,15 @@ impl NiCan {
             )
         };
         if ret != 0 {
-            return Err(CanError::DeviceOpenFailed);
+            return Err(CanError::OperationError(
+                "device configration error".into()
+            ));
         }
 
         let mut handle = 0;
         let ret = unsafe { (self.ncOpenObject)(chl_ascii.into_raw(), &mut handle) };
         if ret != 0 {
-            return Err(CanError::DeviceOpenFailed);
+            return Err(CanError::OperationError("device open error".into()));
         }
 
         self.channels.insert(channel.into(), NiCanContext {
@@ -125,16 +129,19 @@ impl NiCan {
 
                 self.check_status(channel.as_str(), ret)
                     .map_err(|r| {
-                        log::warn!(
+                        let info = format!(
                             "{} error {} when reset",
                             Self::channel_info(&channel),
                             self.status_to_str(r)
                         );
+                        log::warn!(&info);
 
-                        CanError::OperationError(channel)
+                        CanError::OperationError(info)
                     })
             },
-            None => Err(CanError::ChannelNotOpened(channel)),
+            None => Err(CanError::OperationError(
+                format!("channel {} not opened", Self::channel_info(&channel)))
+            ),
         }
     }
 
@@ -146,16 +153,19 @@ impl NiCan {
 
                 self.check_status(channel.as_str(), ret)
                     .map_err(|r| {
-                        log::warn!(
+                        let info = format!(
                             "{} error {} when close",
                             Self::channel_info(&channel),
                             self.status_to_str(r)
                         );
+                        log::warn!(&info);
 
-                        CanError::OperationError(channel)
+                        CanError::OperationError(info)
                     })
             },
-            None => Err(CanError::ChannelNotOpened(channel)),
+            None => Err(CanError::OperationError(
+                format!("channel {} not opened", Self::channel_info(&channel))
+            )),
         }
     }
 
@@ -183,7 +193,9 @@ impl NiCan {
 
                 Ok(())
             },
-            None => Err(CanError::ChannelNotOpened(channel)),
+            None => Err(CanError::OperationError(
+                format!("channel {} not opened", Self::channel_info(&channel))
+            )),
         }
     }
 
@@ -191,10 +203,11 @@ impl NiCan {
         match self.channels.get(&channel) {
             Some(ctx) => {
                 if let Err(ret) = self.wait_for_state(channel.as_str(), ctx.handle, timeout) {
+                    let info = format!("{} wait for state timeout", Self::channel_info(&channel));
                     if ret == constant::CanErrFunctionTimeout {
-                        log::warn!("{} wait for state timeout", Self::channel_info(&channel));
+                        log::warn!(&info);
                     }
-                    return Err(CanError::TimeoutError(Self::channel_info(&channel)));
+                    return Err(CanError::OperationError(info));
                 }
 
                 let raw_msg = NCTYPE_CAN_STRUCT {
@@ -217,12 +230,13 @@ impl NiCan {
                 };
 
                 if let Err(r) = self.check_status(channel.as_str(), ret) {
-                    log::warn!(
+                    let info = format!(
                         "{} error {} when receive",
                         Self::channel_info(&channel),
                         self.status_to_str(r)
                     );
-                    return Err(CanError::OperationError(Self::channel_info(&channel)));
+                    log::warn!(&info);
+                    return Err(CanError::OperationError(info));
                 }
 
                 let mut msg = <NCTYPE_CAN_STRUCT as TryInto<CanMessage>>::try_into(raw_msg)?;
@@ -230,7 +244,9 @@ impl NiCan {
 
                 Ok(vec![msg, ])
             },
-            None => Err(CanError::ChannelNotOpened(channel)),
+            None => Err(CanError::OperationError(
+                format!("channel {} not opened", Self::channel_info(&channel))
+            )),
         }
     }
 
@@ -261,7 +277,9 @@ impl NiCan {
     ) -> Result<R, CanError> {
         match self.channels.get(&channel) {
             Some(ctx) => cb(ctx),
-            None => Err(CanError::ChannelNotOpened(channel)),
+            None => Err(CanError::OperationError(
+                format!("channel {} not opened", Self::channel_info(&channel))
+            )),
         }
     }
 
@@ -294,7 +312,7 @@ impl NiCan {
     }
 }
 
-impl CanDriver for NiCan {
+impl CanDevice for NiCan {
     type Channel = String;
     type Frame = CanMessage;
 
@@ -311,12 +329,12 @@ impl CanDriver for NiCan {
     }
 
     #[inline]
-    fn transmit(&self, msg: Self::Frame, _: Option<u32>) -> Result<(), CanError> {
+    fn transmit(&self, msg: Self::Frame, _: Option<u32>) -> CanResult<(), CanError> {
         self.transmit_can(msg)
     }
 
     #[inline]
-    fn receive(&self, channel: Self::Channel, timeout: Option<u32>) -> Result<Vec<Self::Frame>, CanError> {
+    fn receive(&self, channel: Self::Channel, timeout: Option<u32>) -> CanResult<Vec<Self::Frame>, CanError> {
         self.receive_can(channel, timeout)
     }
 
@@ -344,8 +362,8 @@ mod tests {
     use super::NiCan;
     use crate::CanMessage;
     use std::time::Duration;
-    use rs_can::{CanDriver, Frame, Id};
-    use rs_can::isotp::IsoTpAdapter;
+    use rs_can::{CanDevice, CanFrame, CanId};
+    // use rs_can::isotp::IsoTpAdapter;
 
     #[ignore]   // device required
     #[test]
@@ -357,7 +375,7 @@ mod tests {
         let data = vec![0x02, 0x10, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00];
         let mut count = 0;
         loop {
-            let mut msg = CanMessage::new(Id::from(0x7DF), data.as_slice()).unwrap();
+            let mut msg = CanMessage::new(CanId::from(0x7DF), data.as_slice()).unwrap();
             msg.set_channel(channel.into());
             driver.transmit(msg, None)?;
 
@@ -379,34 +397,34 @@ mod tests {
         Ok(())
     }
 
-    #[ignore]   // device required
-    #[test]
-    fn isotp() -> anyhow::Result<()> {
-        let channel = "CAN0";
-        let mut driver = NiCan::new(None)?;
-        driver.open(channel, vec![], 500_000, true)?;
-
-        let mut adapter = IsoTpAdapter::new(driver.clone());
-        adapter.start(100);
-
-        let data = vec![0x02, 0x10, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00];
-        let mut count = 0;
-        loop {
-            let mut msg = CanMessage::new(Id::from(0x7DF), data.as_slice()).unwrap();
-            msg.set_channel(channel.into());
-            adapter.sender().send(msg)?;
-
-            std::thread::sleep(Duration::from_millis(100));
-
-            count += 1;
-            if count > 10 {
-                break;
-            }
-        }
-
-        adapter.stop();
-        driver.shutdown();
-
-        Ok(())
-    }
+    // #[ignore]   // device required
+    // #[test]
+    // fn isotp() -> anyhow::Result<()> {
+    //     let channel = "CAN0";
+    //     let mut driver = NiCan::new(None)?;
+    //     driver.open(channel, vec![], 500_000, true)?;
+    //
+    //     let mut adapter = IsoTpAdapter::new(driver.clone());
+    //     adapter.start(100);
+    //
+    //     let data = vec![0x02, 0x10, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00];
+    //     let mut count = 0;
+    //     loop {
+    //         let mut msg = CanMessage::new(CanId::from(0x7DF), data.as_slice()).unwrap();
+    //         msg.set_channel(channel.into());
+    //         adapter.sender().send(msg)?;
+    //
+    //         std::thread::sleep(Duration::from_millis(100));
+    //
+    //         count += 1;
+    //         if count > 10 {
+    //             break;
+    //         }
+    //     }
+    //
+    //     adapter.stop();
+    //     driver.shutdown();
+    //
+    //     Ok(())
+    // }
 }

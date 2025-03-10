@@ -132,7 +132,7 @@ impl ZLinPublishEx {
                 Ok(Self {
                     ID: pid,
                     dataLen: len as u8,
-                    data: data.try_into().map_err(|_| CanError::FrameConvertFailed("invalid data length".to_owned()))?,
+                    data: data.try_into().map_err(|_| CanError::OtherError("invalid data length".to_owned()))?,
                     chkSumMode: cs_mode as c_uchar,
                     reserved: Default::default(),
                 })

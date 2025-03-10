@@ -1,30 +1,17 @@
-#[derive(Debug,  Clone, thiserror::Error)]
-pub enum CanError {
-    #[error("RUST-CAN - device configuration error {0}")]
-    DeviceConfigError(String),
-    #[error("RUST-CAN - device open failed")]
-    DeviceOpenFailed,
-    #[error("RUST-CAN - device is not opened")]
-    DeviceNotOpened,
-    #[error("RUST-CAN - device not supported")]
-    DeviceNotSupported,
+use thiserror::Error;
 
-    #[error("RUST-CAN - data length: {0} is too large")]
-    DataOutOfRange(usize),
-
-    #[error("RUST-CAN - channel: {0} initialize failed")]
-    ChannelInitializeError(String),
-    #[error("RUST-CAN - channel: {0} not opened")]
-    ChannelNotOpened(String),
-
+#[derive(Debug,  Clone, Error)]
+pub enum Error {
+    /// Error when operation like library loading, device or channel opening and so on.
+    #[error("RUST-CAN - initialize error: {0}")]
+    InitializeError(String),
+    /// Error when function is not implemented.
+    #[error("RUST-CAN - not implement error")]
+    NotImplementedError,
+    /// Error when operation like transmit, receive and so on.
     #[error("RUST-CAN - operation error: {0}")]
     OperationError(String),
-    #[error("RUST-CAN - channel: {0} timeout error")]
-    TimeoutError(String),
-
-    #[error("RUST-CAN - frame convert failed, reason: {0}")]
-    FrameConvertFailed(String),
-
+    /// Error when others.
     #[error("RUST-CAN - other error: {0}")]
     OtherError(String),
 }

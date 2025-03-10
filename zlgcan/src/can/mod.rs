@@ -164,14 +164,14 @@ fn to_chl_cfg(mode: u8, bitrate: u32, cfg_ctx: &BitrateCfg, ext: &CanChlCfgExt) 
     match cfg_ctx.bitrate.get(&bitrate.to_string()) {
         Some(v) => {
             let timing0 = v.get(TIMING0)
-                .ok_or(CanError::DeviceConfigError(format!("`{}` is not configured in file!", TIMING0)))?;
+                .ok_or(CanError::OtherError(format!("`{}` is not configured in file!", TIMING0)))?;
             let timing1 = v.get(TIMING1)
-                .ok_or(CanError::DeviceConfigError(format!("`{}` is not configured in file!", TIMING1)))?;
+                .ok_or(CanError::OtherError(format!("`{}` is not configured in file!", TIMING1)))?;
             ZCanChlCfg::new(
                 mode, *timing0, *timing1, ext.filter, ext.acc_code, ext.acc_mask
             )
         },
-        None => Err(CanError::DeviceConfigError(
+        None => Err(CanError::OtherError(
             format!("the bitrate: `{}` is not configured", bitrate)
         )),
     }
@@ -183,9 +183,9 @@ impl TryFrom<&CanChlCfg> for ZCanChlCfgV1 {
     fn try_from(value: &CanChlCfg) -> Result<Self, Self::Error> {
         let dev_type = value.dev_type;
         let binding = value.cfg_ctx.upgrade()
-            .ok_or(CanError::DeviceConfigError("Failed to upgrade configuration context".to_string()))?;
+            .ok_or(CanError::OtherError("Failed to upgrade configuration context".to_string()))?;
         let cfg = binding.get(&dev_type.to_string())
-            .ok_or(CanError::DeviceConfigError(format!("device: {:?} is not configured in file!", dev_type)))?;
+            .ok_or(CanError::OtherError(format!("device: {:?} is not configured in file!", dev_type)))?;
         let dev_type = value.device_type()?;
         match dev_type {
             ZCanDeviceType::ZCAN_USBCANFD_800U => {
@@ -234,13 +234,13 @@ impl TryFrom<&CanChlCfg> for ZCanChlCfgV2 {
     fn try_from(value: &CanChlCfg) -> Result<Self, Self::Error> {
         let dev_type = value.dev_type;
         let binding = value.cfg_ctx.upgrade()
-            .ok_or(CanError::DeviceConfigError("Failed to upgrade configuration context".to_string()))?;
+            .ok_or(CanError::OtherError("Failed to upgrade configuration context".to_string()))?;
         let cfg = binding.get(&dev_type.to_string())
-            .ok_or(CanError::DeviceConfigError(format!("device: {:?} is not configured in file!", dev_type)))?;
+            .ok_or(CanError::OtherError(format!("device: {:?} is not configured in file!", dev_type)))?;
         if value.device_type()?
             .canfd_support() {
             let clock = cfg.clock
-                .ok_or(CanError::DeviceConfigError("`clock` is not configured in file!".to_string()))?;
+                .ok_or(CanError::OtherError("`clock` is not configured in file!".to_string()))?;
             let ext = &value.extra;
             let (aset, dset) = get_fd_set(value, cfg, ext.dbitrate)?;
             Ok(Self::from(
@@ -275,10 +275,10 @@ impl CanChlCfgFactory {
             },
             Err(_) => BITRATE_CFG_FILENAME.into(),
         };
-        let data = read_to_string(libpath.clone())
-            .map_err(|e| CanError::DeviceConfigError(format!("Unable to read `{}`: {:?}", libpath, e)))?;
+        let data = read_to_string(&libpath)
+            .map_err(|e| CanError::OtherError(format!("Unable to read `{}`: {:?}", libpath, e)))?;
         let result = serde_yaml::from_str(&data)
-            .map_err(|e| CanError::DeviceConfigError(format!("Error parsing YAML: {:?}", e)))?;
+            .map_err(|e| CanError::OtherError(format!("Error parsing YAML: {:?}", e)))?;
         Ok(Self(Arc::new(result)))
     }
 
@@ -294,7 +294,7 @@ impl CanChlCfgFactory {
             Ok(CanChlCfg::new(dev_type, can_type, mode, bitrate, extra, Arc::downgrade(&self.0)))
         }
         else {
-            Err(CanError::DeviceConfigError(
+            Err(CanError::OtherError(
                 format!("device: {:?} is not configured in file!", dev_type)
             ))
         }
@@ -311,7 +311,7 @@ fn get_fd_set(
     let dbitrate_ctx = &cfg.data_bitrate;
     let aset = bitrate_ctx
         .get(&bitrate.to_string())
-        .ok_or(CanError::DeviceConfigError(format!("bitrate `{}` is not configured in file!", bitrate)))?;
+        .ok_or(CanError::OtherError(format!("bitrate `{}` is not configured in file!", bitrate)))?;
     let dset=
         match dbitrate {
             Some(v) => {    // dbitrate is not None
@@ -319,13 +319,13 @@ fn get_fd_set(
                     Some(ctx) => {  // dbitrate context is not None
                         match ctx.get(&v.to_string()) {
                             Some(value) => Ok(value),
-                            None => Err(CanError::DeviceConfigError(format!("data bitrate `{}` is not configured in file!", v))),
+                            None => Err(CanError::OtherError(format!("data bitrate `{}` is not configured in file!", v))),
                         }
                     },
                     None => {   // dbitrate context is None
                         match bitrate_ctx.get(&v.to_string()) {
                             Some(value) => Ok(value),
-                            None => Err(CanError::DeviceConfigError(format!("data bitrate `{}` is not configured in file!", v))),
+                            None => Err(CanError::OtherError(format!("data bitrate `{}` is not configured in file!", v))),
                         }
                     }
                 }

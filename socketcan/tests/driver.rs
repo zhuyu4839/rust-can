@@ -1,4 +1,4 @@
-use rs_can::{CanDriver, CanError, Frame};
+use rs_can::{CanDevice, CanError, CanFrame};
 use socan::{CanMessage, SocketCan};
 
 #[test]

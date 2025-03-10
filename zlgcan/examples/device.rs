@@ -1,6 +1,6 @@
 mod utils;
 
-use rs_can::{CanDriver, Frame, Id};
+use rs_can::{CanDevice, CanFrame, CanId};
 use zlgcan::can::CanMessage;
 use zlgcan::driver::ZDevice;
 use crate::utils::{init_device, CHANNEL};
@@ -9,7 +9,7 @@ fn main() -> anyhow::Result<()> {
     let mut device = init_device()?;
 
     let data = vec![0x02, 0x10, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00];
-    let msg = CanMessage::new(Id::from(0x7DF), &data).unwrap();
+    let msg = CanMessage::new(CanId::from(0x7DF), &data).unwrap();
 
     device.transmit_can(CHANNEL, vec![msg, ])?;
 

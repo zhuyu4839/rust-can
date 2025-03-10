@@ -44,15 +44,15 @@ impl ZDevice for ZCanDriver {
         Ok(Self {
             handler: Default::default(),
             usbcan_api: Arc::new(unsafe { Container::load(format!("{}libusbcan.so", libpath)) }
-                .map_err(|e| CanError::DeviceConfigError(e.to_string()))?),
+                .map_err(|e| CanError::InitializeError(e.to_string()))?),
             usbcan_4e_api: Arc::new(unsafe { Container::load(format!("{}libusbcan-4e.so", libpath)) }
-                .map_err(|e| CanError::DeviceConfigError(e.to_string()))?),
+                .map_err(|e| CanError::InitializeError(e.to_string()))?),
             usbcan_8e_api: Arc::new(unsafe { Container::load(format!("{}libusbcan-8e.so", libpath)) }
-                .map_err(|e| CanError::DeviceConfigError(e.to_string()))?),
+                .map_err(|e| CanError::InitializeError(e.to_string()))?),
             usbcanfd_api: Arc::new(unsafe { Container::load(format!("{}libusbcanfd.so", libpath)) }
-                .map_err(|e| CanError::DeviceConfigError(e.to_string()))?),
+                .map_err(|e| CanError::InitializeError(e.to_string()))?),
             usbcanfd_800u_api: Arc::new(unsafe { Container::load(format!("{}libusbcanfd800u.so", libpath)) }
-                .map_err(|e| CanError::DeviceConfigError(e.to_string()))?),
+                .map_err(|e| CanError::InitializeError(e.to_string()))?),
             dev_type,
             dev_idx,
             derive,

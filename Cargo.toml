@@ -2,7 +2,7 @@
 members = [
     "rs-can",
 #    "nican",    # only on 32bit Windows
-#    "socan",    # only on Linux
+#    "socketcan",# only on Linux
     "zlgcan",
 ]
 
@@ -19,12 +19,12 @@ dotenvy = "0.15"
 hex = "0.4"
 
 rs-can = { path = "rs-can" }
-iso15765-2 = "0.1.0-alpha1"
-iso14229-1 = "0.1.0-alpha1"
+#iso15765-2 = "0.1.0-alpha1"
+#iso14229-1 = "0.1.0-alpha1"
 
 # dev-dependencies
 anyhow = "1"
-hex-literal = "1"
+#hex-literal = "1"
 bin_file = "0.1"
 crc = "3.2"
-docan = "0.1.0-alpha1"
+#docan = "0.1.0-alpha1"

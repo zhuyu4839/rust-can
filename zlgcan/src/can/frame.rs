@@ -1,6 +1,5 @@
 use std::ffi::{c_uchar, c_uint, c_ushort};
-use rs_can::{CAN_FRAME_MAX_SIZE, CanError, IdentifierFlags, SFF_MASK, EFF_MASK, CANFD_FRAME_MAX_SIZE};
-use rs_can::utils::data_resize;
+use rs_can::{MAX_FRAME_SIZE, CanError, IdentifierFlags, SFF_MASK, EFF_MASK, MAX_FD_FRAME_SIZE, utils::data_resize};
 use crate::can::TIME_FLAG_VALID;
 use super::constant::{ZCanHdrInfoField, CANFD_BRS, CANFD_ESI};
 
@@ -23,7 +22,7 @@ pub struct USBCanEUWhiteList {
     pub stop: u32,
 }
 
-pub trait NewZCanFrame {
+pub trait ZCanFrame {
     type Error;
     fn new<T>(
         can_id: u32,
@@ -48,20 +47,20 @@ pub struct ZCanFrameV1 {
     pub(crate) rem_flag: c_uchar,      //是否是远程帧
     pub(crate) ext_flag: c_uchar,      //是否是扩展帧
     pub(crate) len: c_uchar,
-    pub(crate) data: [c_uchar; CAN_FRAME_MAX_SIZE],
+    pub(crate) data: [c_uchar; MAX_FRAME_SIZE],
     pub(crate) channel: c_uchar,
     #[allow(dead_code)]
     pub(crate) reserved: [c_uchar; 2],
 }
 
-impl NewZCanFrame for ZCanFrameV1 {
+impl ZCanFrame for ZCanFrameV1 {
     type Error = CanError;
     fn new<T>(can_id: u32, channel: u8, data: T, info: ZCanHdrInfo, timestamp: u64) -> Result<Self, Self::Error>
         where
             T: AsRef<[u8]> {
         zcan_frame_new(can_id, channel, data, info, |id, _chl, data, len, info| {
-            let data: [c_uchar; CAN_FRAME_MAX_SIZE] = data.try_into()
-                .map_err(|_| CanError::FrameConvertFailed("data length is invalid".to_owned()))?;
+            let data: [c_uchar; MAX_FRAME_SIZE] = data.try_into()
+                .map_err(|_| CanError::OtherError("data length is invalid".to_owned()))?;
             Ok(Self {
                 can_id: id,
                 timestamp: timestamp as u32,
@@ -144,17 +143,17 @@ pub struct ZCanHeaderV1 {
 #[derive(Debug, Default, Copy, Clone)]
 pub struct ZCanFrameV2 {
     pub(crate) hdr: ZCanHeaderV1,
-    pub(crate) data: [c_uchar; CAN_FRAME_MAX_SIZE],
+    pub(crate) data: [c_uchar; MAX_FRAME_SIZE],
 }
 
-impl NewZCanFrame for ZCanFrameV2 {
+impl ZCanFrame for ZCanFrameV2 {
     type Error = CanError;
     fn new<T>(can_id: u32, channel: u8, data: T, info: ZCanHdrInfo, timestamp: u64) -> Result<Self, Self::Error>
         where
             T: AsRef<[u8]> {
         zcan_frame_new(can_id, channel, data, info, |id, chl, data, len, info| {
-            let data: [c_uchar; CAN_FRAME_MAX_SIZE] = data.try_into()
-                .map_err(|_| CanError::FrameConvertFailed("data length is invalid".to_owned()))?;
+            let data: [c_uchar; MAX_FRAME_SIZE] = data.try_into()
+                .map_err(|_| CanError::OtherError("data length is invalid".to_owned()))?;
             Ok(Self {
                 hdr: ZCanHeaderV1 {
                     timestamp: timestamp as u32,
@@ -194,7 +193,7 @@ impl ZCanHeaderV2 {
 #[derive(Debug, Default, Copy, Clone)]
 pub struct ZCanFrameV3 {
     pub(crate) hdr: ZCanHeaderV2,
-    pub(crate) data: [c_uchar; CAN_FRAME_MAX_SIZE],
+    pub(crate) data: [c_uchar; MAX_FRAME_SIZE],
     pub(crate) ts_or_mode: c_uint,       // timestamp when received
 }
 
@@ -205,15 +204,15 @@ impl ZCanFrameV3 {
     }
 }
 
-impl NewZCanFrame for ZCanFrameV3 {
+impl ZCanFrame for ZCanFrameV3 {
     type Error = CanError;
     #[allow(unused_variables)]
     fn new<T>(can_id: u32, channel: u8, data: T, info: ZCanHdrInfo, _: u64) -> Result<Self, Self::Error>
         where
             T: AsRef<[u8]> {
         zcan_frame_new2(can_id, channel, data, info,  |id, chl, data, len, info| {
-            let data: [c_uchar; CAN_FRAME_MAX_SIZE] = data.try_into()
-                .map_err(|_| CanError::FrameConvertFailed("data length is invalid".to_owned()))?;
+            let data: [c_uchar; MAX_FRAME_SIZE] = data.try_into()
+                .map_err(|_| CanError::OtherError("data length is invalid".to_owned()))?;
             Ok(Self {
                 hdr: ZCanHeaderV2 {
                     can_id: id,
@@ -232,12 +231,12 @@ impl NewZCanFrame for ZCanFrameV3 {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct CanFdData {
-    pub(crate) data: [c_uchar; CANFD_FRAME_MAX_SIZE],
+    pub(crate) data: [c_uchar; MAX_FD_FRAME_SIZE],
 }
 
 impl Default for CanFdData {
     fn default() -> Self {
-        Self { data: [Default::default(); CANFD_FRAME_MAX_SIZE] }
+        Self { data: [Default::default(); MAX_FD_FRAME_SIZE] }
     }
 }
 
@@ -249,14 +248,14 @@ pub struct ZCanFdFrameV1 {
     pub(crate) data: CanFdData,
 }
 
-impl NewZCanFrame for ZCanFdFrameV1 {
+impl ZCanFrame for ZCanFdFrameV1 {
     type Error = CanError;
     fn new<T>(can_id: u32, channel: u8, data: T, info: ZCanHdrInfo, timestamp: u64) -> Result<Self, Self::Error>
         where
             T: AsRef<[u8]> {
         zcanfd_frame_new(can_id, channel, data, info, |id, chl, data, len, info| {
-            let data: [c_uchar; CANFD_FRAME_MAX_SIZE] = data.try_into()
-                .map_err(|_| CanError::FrameConvertFailed("data length is invalid".to_owned()))?;
+            let data: [c_uchar; MAX_FD_FRAME_SIZE] = data.try_into()
+                .map_err(|_| CanError::OtherError("data length is invalid".to_owned()))?;
             Ok(Self {
                 hdr: ZCanHeaderV1 {
                     timestamp: timestamp as u32,
@@ -288,7 +287,7 @@ impl ZCanFdFrameV2 {
     }
 }
 
-impl NewZCanFrame for ZCanFdFrameV2 {
+impl ZCanFrame for ZCanFdFrameV2 {
     type Error = CanError;
     #[allow(unused_variables)]
     fn new<T>(can_id: u32, channel: u8, data: T, info: ZCanHdrInfo, _: u64) -> Result<Self, Self::Error>
@@ -302,8 +301,8 @@ impl NewZCanFrame for ZCanFdFrameV2 {
             if info.get_field(ZCanHdrInfoField::IsErrorStateIndicator) > 0 {
                 flag |= CANFD_ESI;
             }
-            let data: [c_uchar; CANFD_FRAME_MAX_SIZE] = data.try_into()
-                .map_err(|_| CanError::FrameConvertFailed("data length is invalid".to_owned()))?;
+            let data: [c_uchar; MAX_FD_FRAME_SIZE] = data.try_into()
+                .map_err(|_| CanError::OtherError("data length is invalid".to_owned()))?;
 
             Ok(Self {
                 hdr: ZCanHeaderV2 {
@@ -334,9 +333,9 @@ fn zcan_frame_new<T, R>(
             let mut data = Vec::from(data.as_ref());
             let len = data.len();
             match len {
-                0..=CAN_FRAME_MAX_SIZE => {
+                0..=MAX_FRAME_SIZE => {
                     set_extended(&mut info, can_id);
-                    data_resize(&mut data, CAN_FRAME_MAX_SIZE);
+                    data_resize(&mut data, MAX_FRAME_SIZE);
 
                     callback(can_id, channel, data, len as u8, info)
                 },
@@ -359,9 +358,9 @@ fn zcanfd_frame_new<T, R>(
     if let 0..=EFF_MASK = can_id {
         let mut data = Vec::from(data.as_ref());
         let len = data.len();
-        if let ..=CANFD_FRAME_MAX_SIZE = len {
+        if let ..=MAX_FD_FRAME_SIZE = len {
             set_extended(&mut info, can_id);
-            data_resize(&mut data, CANFD_FRAME_MAX_SIZE);
+            data_resize(&mut data, MAX_FD_FRAME_SIZE);
 
             callback(can_id, channel, data, len as u8, info)
         }
@@ -389,8 +388,8 @@ fn zcan_frame_new2<T, R>(
             let mut data = Vec::from(data.as_ref());
             let len = data.len();
             match len {
-                0..=CAN_FRAME_MAX_SIZE => {
-                    data_resize(&mut data, CAN_FRAME_MAX_SIZE);
+                0..=MAX_FRAME_SIZE => {
+                    data_resize(&mut data, MAX_FRAME_SIZE);
                     set_extended(&mut info, can_id);
 
                     let mut can_id = can_id;
@@ -424,8 +423,8 @@ fn zcanfd_frame_new2<T, R>(
     if let 0..=EFF_MASK = can_id {
         let mut data = Vec::from(data.as_ref());
         let len = data.len();
-        if let ..=CANFD_FRAME_MAX_SIZE = len {
-            data_resize(&mut data, CANFD_FRAME_MAX_SIZE);
+        if let ..=MAX_FD_FRAME_SIZE = len {
+            data_resize(&mut data, MAX_FD_FRAME_SIZE);
             set_extended(&mut info, can_id);
 
             let mut can_id = can_id;

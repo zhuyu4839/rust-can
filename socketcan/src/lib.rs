@@ -5,7 +5,7 @@ pub use frame::*;
 
 use std::{collections::HashMap, io, sync::Arc, os::{fd::{AsRawFd, BorrowedFd, FromRawFd, OwnedFd}, raw::{c_int, c_void}}, time::{Instant, Duration}};
 use libc::{can_filter, can_frame, canfd_frame, canxl_frame, fcntl, read, CAN_RAW_ERR_FILTER, CAN_RAW_FILTER, CAN_RAW_JOIN_FILTERS, CAN_RAW_LOOPBACK, CAN_RAW_RECV_OWN_MSGS, EINPROGRESS, F_GETFL, F_SETFL, O_NONBLOCK, SOL_CAN_RAW, SOL_SOCKET, SO_RCVTIMEO, SO_SNDTIMEO};
-use rs_can::{CanDriver, CanError, CanFilter, Direct, Frame, ResultWrapper, ERR_MASK};
+use rs_can::{CanDevice, CanError, CanFilter, CanDirect, CanFrame, CanResult, ERR_MASK};
 
 pub(crate) const FRAME_SIZE: usize = std::mem::size_of::<can_frame>();
 pub(crate) const FD_FRAME_SIZE: usize = std::mem::size_of::<canfd_frame>();
@@ -23,7 +23,7 @@ impl SocketCan {
 
     pub fn init_channel(&mut self, channel: &str, canfd: bool) -> Result<(), CanError> {
         let addr = CanAddr::from_iface(channel)
-            .map_err(|e| CanError::DeviceConfigError(e.to_string()))?;
+            .map_err(|e| CanError::InitializeError(e.to_string()))?;
 
         let _ = raw_open_socket(&addr)
             .and_then(|fd| {
@@ -38,7 +38,7 @@ impl SocketCan {
                 //     .insert(channel.to_owned(), unsafe { OwnedFd::from_raw_fd(fd) });
                 Ok(())
             })
-            .map_err(|_| CanError::DeviceOpenFailed);
+            .map_err(|_| CanError::OperationError("device open failed".into()));
 
         Ok(())
     }
@@ -53,7 +53,7 @@ impl SocketCan {
                     FRAME_SIZE => {
                         let frame = unsafe { *(&buffer as *const _ as *const can_frame) };
                         let mut frame = CanMessage::from(CanAnyFrame::from(frame));
-                        frame.set_direct(Direct::Receive);
+                        frame.set_direct(CanDirect::Receive);
                         Ok(frame)
                     },
                     FD_FRAME_SIZE => {
@@ -358,12 +358,12 @@ impl SocketCan {
                 )
                     .map_err(|e| CanError::OperationError(e.to_string()))
             }
-            None => Err(CanError::ChannelNotOpened(channel.to_string())),
+            None => Err(CanError::OperationError(format!("channel {} not opened", channel))),
         }
     }
 }
 
-impl CanDriver for SocketCan {
+impl CanDevice for SocketCan {
     type Channel = String;
     type Frame = CanMessage;
 
@@ -375,7 +375,7 @@ impl CanDriver for SocketCan {
     }
 
     #[inline(always)]
-    fn transmit(&self, msg: Self::Frame, timeout: Option<u32>) -> ResultWrapper<(), CanError> {
+    fn transmit(&self, msg: Self::Frame, timeout: Option<u32>) -> CanResult<(), CanError> {
         match timeout {
             Some(timeout) => self.write_timeout(msg, Duration::from_millis(timeout as u64)),
             None => self.write(msg),
@@ -383,7 +383,7 @@ impl CanDriver for SocketCan {
     }
 
     #[inline(always)]
-    fn receive(&self, channel: Self::Channel, timeout: Option<u32>) -> ResultWrapper<Vec<Self::Frame>, CanError> {
+    fn receive(&self, channel: Self::Channel, timeout: Option<u32>) -> CanResult<Vec<Self::Frame>, CanError> {
         let timeout = timeout.unwrap_or(0);
         let msg = self.read_timeout(&channel, Duration::from_millis(timeout as u64))?;
         Ok(vec![msg, ])
