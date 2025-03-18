@@ -1,22 +1,23 @@
 use std::fmt::{Display, Formatter};
 use rs_can::{CanDirect, CanFrame, CanId, MAX_FRAME_SIZE, utils::{can_dlc, data_resize, is_can_fd_len}};
+use crate::can::ZCanTxMode;
 
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct CanMessage {
-    timestamp: u64,
-    arbitration_id: u32,
-    is_extended_id: bool,
-    is_remote_frame: bool,
-    is_error_frame: bool,
-    channel: u8,
-    length: usize,
-    data: Vec<u8>,
-    is_fd: bool,
-    direct: CanDirect,
-    bitrate_switch: bool,
-    error_state_indicator: bool,
-    tx_mode: u8,
+    pub(crate) timestamp: u64,
+    pub(crate) arbitration_id: u32,
+    pub(crate) is_extended_id: bool,
+    pub(crate) is_remote_frame: bool,
+    pub(crate) is_error_frame: bool,
+    pub(crate) channel: u8,
+    pub(crate) length: usize,
+    pub(crate) data: Vec<u8>,
+    pub(crate) is_fd: bool,
+    pub(crate) direct: CanDirect,
+    pub(crate) bitrate_switch: bool,
+    pub(crate) error_state_indicator: bool,
+    pub(crate) tx_mode: Option<u8>,
 }
 
 unsafe impl Send for CanMessage {}
@@ -44,7 +45,7 @@ impl CanFrame for CanMessage {
                     direct: Default::default(),
                     bitrate_switch: false,
                     error_state_indicator: false,
-                    tx_mode: 0,
+                    tx_mode: Default::default(),
                 })
             },
             Err(_) => None,
@@ -71,7 +72,7 @@ impl CanFrame for CanMessage {
                     direct: Default::default(),
                     bitrate_switch: false,
                     error_state_indicator: false,
-                    tx_mode: 0,
+                    tx_mode: Default::default(),
                 })
             },
             Err(_) => None,
@@ -216,10 +217,12 @@ impl PartialEq for CanMessage {
 
 impl CanMessage {
     #[inline(always)]
-    pub const fn tx_mode(&self) -> u8 { self.tx_mode }
+    pub fn tx_mode(&self) -> u8 {
+        self.tx_mode.unwrap_or_else(|| ZCanTxMode::default() as u8)
+    }
     #[inline(always)]
     pub fn set_tx_mode(&mut self, tx_mode: u8) -> &mut Self {
-        self.tx_mode = if tx_mode > 3 { Default::default() } else { tx_mode };
+        self.tx_mode = if tx_mode > 3 { Some(ZCanTxMode::default() as u8) } else { Some(tx_mode) };
         self
     }
 }

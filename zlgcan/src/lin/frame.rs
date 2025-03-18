@@ -64,8 +64,8 @@ impl ZLinFrameDataUnion {
         Self { event }
     }
 
-    pub fn from_raw() -> Self {
-        todo!()
+    pub fn from_raw(raw: [c_uchar; 46usize]) -> Self {
+        Self { raw }
     }
 }
 
@@ -74,6 +74,30 @@ pub struct ZLinFrame {
     pub chl: c_uchar,
     pub data_type: c_uchar,
     pub data: ZLinFrameDataUnion,
+}
+
+impl ZLinFrame {
+    pub fn default_data() -> Self {
+        Self {
+            chl: Default::default(),
+            data_type: ZLinDataType::TypeData as u8,
+            data: ZLinFrameDataUnion::from_data(Default::default()),
+        }
+    }
+    pub fn default_err() -> Self {
+        Self {
+            chl: Default::default(),
+            data_type: ZLinDataType::TypeError as u8,
+            data: ZLinFrameDataUnion::from_error(Default::default()),
+        }
+    }
+    pub fn default_event() -> Self {
+        Self {
+            chl: Default::default(),
+            data_type: ZLinDataType::TypeEvent as u8,
+            data: ZLinFrameDataUnion::from_event(Default::default()),
+        }
+    }
 }
 
 impl ZLinFrame {

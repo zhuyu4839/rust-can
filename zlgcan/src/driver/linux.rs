@@ -68,7 +68,7 @@ impl ZDevice for ZCanDriver {
     }
 
     fn open(&mut self) -> Result<(), CanError> {
-        let mut context = ZDeviceContext::new(self.dev_type, self.dev_idx, None);
+        let mut context = ZDeviceContext::new(self.dev_type, self.dev_idx, self.derive.is_some());
         let dev_info: ZDeviceInfo;
         match self.dev_type {
             ZCanDeviceType::ZCAN_USBCAN1
@@ -433,27 +433,21 @@ impl ZDevice for ZCanDriver {
             ZCanDeviceType::ZCAN_USBCAN1
             | ZCanDeviceType::ZCAN_USBCAN2 => {
                 let results = self.can_handler(channel, |context| {
-                    self.usbcan_api.receive_can(context, size, timeout, |frames, size| {
-                        frames.resize_with(size, ZCanFrameV1::default);
-                    })
+                    self.usbcan_api.receive_can(context, size, timeout)
                 })?;
 
                 Vec::try_from_iter(results, self.timestamp(channel)?)
             },
             ZCanDeviceType::ZCAN_USBCAN_4E_U => {
                 let results = self.can_handler(channel, |context| {
-                    self.usbcan_4e_api.receive_can(context, size, timeout, |frames, size| {
-                        frames.resize_with(size, ZCanFrameV3::default);
-                    })
+                    self.usbcan_4e_api.receive_can(context, size, timeout)
                 })?;
 
                 Vec::try_from_iter(results, self.timestamp(channel)?)
             },
             ZCanDeviceType::ZCAN_USBCAN_8E_U => {
                 let results = self.can_handler(channel, |context| {
-                    self.usbcan_8e_api.receive_can(context, size, timeout, |frames, size| {
-                        frames.resize_with(size, ZCanFrameV3::default);
-                    })
+                    self.usbcan_8e_api.receive_can(context, size, timeout)
                 })?;
 
                 Vec::try_from_iter(results, self.timestamp(channel)?)
@@ -462,18 +456,14 @@ impl ZDevice for ZCanDriver {
             | ZCanDeviceType::ZCAN_USBCANFD_100U
             | ZCanDeviceType::ZCAN_USBCANFD_200U => {
                 let results = self.can_handler(channel, |context| {
-                    self.usbcanfd_api.receive_can(context, size, timeout, |frames, size| {
-                        frames.resize_with(size, ZCanFrameV2::default);
-                    })
+                    self.usbcanfd_api.receive_can(context, size, timeout)
                 })?;
 
                 Vec::try_from_iter(results, self.timestamp(channel)?)
             },
             ZCanDeviceType::ZCAN_USBCANFD_800U => {
                 let results = self.can_handler(channel, |context| {
-                    self.usbcanfd_800u_api.receive_can(context, size, timeout, |frames, size| {
-                        frames.resize_with(size, ZCanFrameV3::default);
-                    })
+                    self.usbcanfd_800u_api.receive_can(context, size, timeout)
                 })?;
 
                 Vec::try_from_iter(results, self.timestamp(channel)?)
@@ -528,18 +518,14 @@ impl ZDevice for ZCanDriver {
             | ZCanDeviceType::ZCAN_USBCANFD_100U
             | ZCanDeviceType::ZCAN_USBCANFD_200U => {
                 let results = self.can_handler(channel, |context| {
-                    self.usbcanfd_api.receive_canfd(context, size, timeout, |frames, size| {
-                        frames.resize_with(size, ZCanFdFrameV1::default);
-                    })
+                    self.usbcanfd_api.receive_canfd(context, size, timeout)
                 })?;
 
                 Vec::try_from_iter(results, self.timestamp(channel)?)
             },
             ZCanDeviceType::ZCAN_USBCANFD_800U => {
                 let results = self.can_handler(channel, |context| {
-                    self.usbcanfd_800u_api.receive_canfd(context, size, timeout, |frames, size| {
-                        frames.resize_with(size, ZCanFdFrameV2::default);
-                    })
+                    self.usbcanfd_800u_api.receive_canfd(context, size, timeout)
                 })?;
 
                 Vec::try_from_iter(results, self.timestamp(channel)?)

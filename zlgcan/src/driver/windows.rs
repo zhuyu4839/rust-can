@@ -1,11 +1,10 @@
 use std::sync::Arc;
 use dlopen2::symbor::Container;
 use rs_can::CanError;
-use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFdFrameV2, ZCanFrameType, ZCanFrameV3, ZCAN_VAR, ZCAN_ENV, ZCAN_PATH_DEFAULT};
+use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType, constant::{ZCAN_VAR, ZCAN_ENV, ZCAN_PATH_DEFAULT}, ZCanFrame, ZCanFrameInner, ZCanFdFrameInner};
 use crate::cloud::{ZCloudGpsFrame, ZCloudServerInfo, ZCloudUserData};
 use crate::device::{DeriveInfo, Handler, ZCanDeviceType, ZChannelContext, ZDeviceContext, ZDeviceInfo};
-use crate::lin::{ZLinChlCfg, ZLinDataType, ZLinFrame, ZLinFrameDataUnion, ZLinPublish, ZLinPublishEx, ZLinSubscribe};
-use crate::TryFromIterator;
+use crate::lin::{ZLinChlCfg, ZLinFrame, ZLinPublish, ZLinPublishEx, ZLinSubscribe};
 use crate::api::{ZCanApi, ZCloudApi, ZDeviceApi, ZLinApi};
 use crate::api::windows::Api;
 use crate::driver::ZDevice;
@@ -51,7 +50,7 @@ impl ZDevice for ZCanDriver {
     }
 
     fn open(&mut self) -> Result<(), CanError> {
-        let mut context = ZDeviceContext::new(self.dev_type, self.dev_idx, None);
+        let mut context = ZDeviceContext::new(self.dev_type, self.dev_idx, self.derive.is_some());
         self.api.open(&mut context)?;
         let dev_info = match &self.derive {
             Some(v) => ZDeviceInfo::try_from(v)?,
@@ -168,16 +167,18 @@ impl ZDevice for ZCanDriver {
     fn receive_can(&self, channel: u8, size: u32, timeout: Option<u32>) -> Result<Vec<CanMessage>, CanError> {
         let timeout = timeout.unwrap_or(u32::MAX);
         let frames = self.can_handler(channel, |context| {
-            self.api.receive_can(context, size, timeout, |frames, size| {
-                frames.resize_with(size, ZCanFrameV3::default);
-            })
+            self.api.receive_can(context, size, timeout)
         })?;
 
-        Vec::try_from_iter(frames, self.timestamp(channel)?)
+        Ok(frames.into_iter()
+            .map(|frame| unsafe { frame.can.rx.into() })
+            .collect::<Vec<_>>())
     }
 
     fn transmit_can(&self, channel: u8, frames: Vec<CanMessage>) -> Result<u32, CanError> {
-        let frames = Vec::try_from_iter(frames, self.timestamp(channel)?)?;
+        let frames = frames.into_iter()
+            .map(|msg| ZCanFrame { can: ZCanFrameInner { tx: msg.into() } })
+            .collect::<Vec<_>>();
         self.can_handler(channel, |context| {
             self.api.transmit_can(context, frames)
         })
@@ -186,16 +187,18 @@ impl ZDevice for ZCanDriver {
     fn receive_canfd(&self, channel: u8, size: u32, timeout: Option<u32>) -> Result<Vec<CanMessage>, CanError> {
         let timeout = timeout.unwrap_or(u32::MAX);
         let frames = self.can_handler(channel, |context| {
-            self.api.receive_canfd(context, size, timeout, |frames, size| {
-                frames.resize_with(size, ZCanFdFrameV2::default);
-            })
+            self.api.receive_canfd(context, size, timeout)
         })?;
 
-        Vec::try_from_iter(frames, self.timestamp(channel)?)
+        Ok(frames.into_iter()
+            .map(|frame| unsafe { frame.canfd.rx.into() })
+            .collect::<Vec<_>>())
     }
 
     fn transmit_canfd(&self, channel: u8, frames: Vec<CanMessage>) -> Result<u32, CanError> {
-        let frames = Vec::try_from_iter(frames, self.timestamp(channel)?)?;
+        let frames = frames.into_iter()
+            .map(|msg| ZCanFrame { canfd: ZCanFdFrameInner { tx: msg.into() } })
+            .collect::<Vec<_>>();
         self.can_handler(channel, |context| {
             self.api.transmit_canfd(context, frames)
         })
@@ -265,9 +268,7 @@ impl ZDevice for ZCanDriver {
         }
         let timeout = timeout.unwrap_or(u32::MAX);
         self.lin_handler(channel, |context| {
-            self.api.receive_lin(context, size, timeout, |frames, size| {
-                frames.resize_with(size, || -> ZLinFrame { ZLinFrame::new(channel, ZLinDataType::TypeData, ZLinFrameDataUnion::from_data(Default::default())) })
-            })
+            self.api.receive_lin(context, size, timeout)
         })
     }
 
@@ -378,9 +379,7 @@ impl ZDevice for ZCanDriver {
 
         let timeout = timeout.unwrap_or(u32::MAX);
         self.device_handler(|hdl| {
-            self.api.receive_gps(hdl.device_context(), size, timeout, |frames, size| {
-                frames.resize_with(size, Default::default)
-            })
+            self.api.receive_gps(hdl.device_context(), size, timeout)
         })
     }
 

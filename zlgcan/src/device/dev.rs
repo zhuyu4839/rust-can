@@ -4,6 +4,8 @@ use std::fmt::{Display, Formatter};
 use rs_can::CanError;
 use crate::device::{DeriveInfo, ZCanDeviceType};
 
+const ID_LENGTH: usize = 40;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ZDeviceInfo {
@@ -12,9 +14,9 @@ pub struct ZDeviceInfo {
     drv: c_ushort,          //**< driver version */
     api: c_ushort,          //**< API version */
     irq: c_ushort,          //**< IRQ */
-    chn: c_uchar,           //**< channels */
+    pub(crate) chn: c_uchar,           //**< channels */
     sn: [c_uchar; 20],      //**< serial number */
-    id: [c_uchar; 40],      //**< card id */
+    id: [c_uchar; ID_LENGTH],      //**< card id */
     #[allow(dead_code)]
     pad: [c_ushort; 4],
 }
@@ -30,7 +32,7 @@ impl Default for ZDeviceInfo {
             irq: Default::default(),
             chn: Default::default(),
             sn: Default::default(),
-            id: [0; 40],
+            id: [Default::default(); ID_LENGTH],
             pad: Default::default(),
         }
     }
@@ -130,12 +132,16 @@ pub struct ZDeviceContext {
     pub(crate) dev_type: ZCanDeviceType,
     pub(crate) dev_idx: u32,
     pub(crate) dev_hdl: Option<u32>,
+    pub(crate) is_derive: bool,
 }
 
 impl ZDeviceContext {
     #[inline]
-    pub fn new(dev_type: ZCanDeviceType, dev_idx: u32, dev_hdl: Option<u32>) -> Self {
-        Self { dev_type, dev_idx, dev_hdl }
+    pub fn new(dev_type: ZCanDeviceType, dev_idx: u32, is_derive: bool) -> Self {
+        Self { dev_type, dev_idx, dev_hdl: Default::default(), is_derive }
+    }
+    pub fn is_derive(&self) -> bool {
+        self.is_derive
     }
     #[inline]
     pub fn device_type(&self) -> ZCanDeviceType {

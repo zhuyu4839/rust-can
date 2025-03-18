@@ -24,6 +24,7 @@ rs-can = { path = "rs-can" }
 
 # dev-dependencies
 anyhow = "1"
+rand = "0.9"
 #hex-literal = "1"
 bin_file = "0.1"
 crc = "3.2"

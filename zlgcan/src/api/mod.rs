@@ -7,7 +7,7 @@ pub(crate) mod windows;
 
 use std::ffi::{c_char, c_void};
 use rs_can::CanError;
-use crate::can::{CanChlCfg, ZCanChlError, ZCanChlStatus, ZCanFrameType};
+use crate::can::{CanChlCfg, ZCanChlError, ZCanChlStatus, ZCanFrame, ZCanFrameType};
 use crate::cloud::{ZCloudGpsFrame, ZCloudServerInfo, ZCloudUserData};
 use crate::device::{CmdPath, IProperty, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::lin::{ZLinChlCfg, ZLinFrame, ZLinPublish, ZLinPublishEx, ZLinSubscribe};
@@ -51,20 +51,18 @@ pub trait ZDeviceApi {
 
 #[allow(unused_variables)]
 pub trait ZCanApi {
-    type Frame;
-    type FdFrame;
     fn init_can_chl(&self, context: &mut ZChannelContext, cfg: &CanChlCfg) -> Result<(), CanError>;
     fn reset_can_chl(&self, context: &ZChannelContext) -> Result<(), CanError>;
     fn read_can_chl_status(&self, context: &ZChannelContext) -> Result<ZCanChlStatus, CanError>;
     fn read_can_chl_error(&self, context: &ZChannelContext) -> Result<ZCanChlError, CanError>;
     fn clear_can_buffer(&self, context: &ZChannelContext) -> Result<(), CanError>;
     fn get_can_num(&self, context: &ZChannelContext, can_type: ZCanFrameType) -> Result<u32, CanError>;
-    fn receive_can(&self, context: &ZChannelContext, size: u32, timeout: u32, resize: impl Fn(&mut Vec<Self::Frame>, usize)) -> Result<Vec<Self::Frame>, CanError>;
-    fn transmit_can(&self, context: &ZChannelContext, frames: Vec<Self::Frame>) -> Result<u32, CanError>;
-    fn receive_canfd(&self, context: &ZChannelContext, size: u32, timeout: u32, resize: fn(&mut Vec<Self::FdFrame>, usize)) -> Result<Vec<Self::FdFrame>, CanError> {
+    fn receive_can(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<ZCanFrame>, CanError>;
+    fn transmit_can(&self, context: &ZChannelContext, frames: Vec<ZCanFrame>) -> Result<u32, CanError>;
+    fn receive_canfd(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<ZCanFrame>, CanError> {
         Err(CanError::NotImplementedError)
     }
-    fn transmit_canfd(&self, context: &ZChannelContext, frames: Vec<Self::FdFrame>) -> Result<u32, CanError> {
+    fn transmit_canfd(&self, context: &ZChannelContext, frames: Vec<ZCanFrame>) -> Result<u32, CanError> {
         Err(CanError::NotImplementedError)
     }
 }
@@ -88,7 +86,6 @@ pub trait ZLinApi {
         context: &ZChannelContext,
         size: u32,
         timeout: u32,
-        resize: impl Fn(&mut Vec<ZLinFrame>, usize)
     ) -> Result<Vec<ZLinFrame>, CanError> {
         Err(CanError::NotImplementedError)
     }
@@ -138,8 +135,7 @@ pub trait ZCloudApi {
         &self,
         context: &ZDeviceContext,
         size: u32,
-        timeout: u32,
-        resize: impl Fn(&mut Vec<ZCloudGpsFrame>, usize)
+        timeout: u32
     ) -> Result<Vec<ZCloudGpsFrame>, CanError> {
         Err(CanError::NotImplementedError)
     }
