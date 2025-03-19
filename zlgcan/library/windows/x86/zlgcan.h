@@ -72,6 +72,7 @@
 #define ZCAN_PCIE_CANFD_100U_EX   60
 #define ZCAN_PCIE_CANFD_400U_EX   61
 #define ZCAN_PCIE_CANFD_200U_MINI 62
+#define ZCAN_PCIE_CANFD_200U_EX   63
 #define ZCAN_PCIE_CANFD_200U_M2   63
 #define ZCAN_CANFDDTU_400_TCP     64
 #define ZCAN_CANFDDTU_400_UDP     65
@@ -90,6 +91,7 @@
 #define ZCAN_ZPSCANFD_TCP         78
 #define ZCAN_ZPSCANFD_USB         79
 #define ZCAN_CANFDBRIDGE_PLUS     80
+#define ZCAN_CANFDDTU_300U        81
 
 #define ZCAN_OFFLINE_DEVICE 98
 #define ZCAN_VIRTUAL_DEVICE 99
@@ -670,9 +672,9 @@ enum eZLINChkSumMode {
 typedef struct _VCI_LIN_INIT_CONFIG {
     BYTE linMode;     // 是否作为主机，0-从机，1-主机
     BYTE chkSumMode;  // 校验方式，1-经典校验 2-增强校验 3-自动(对应eZLINChkSumMode的模式)
-    BYTE maxLength;  // 最大数据长度，8~64
-    BYTE reserved;   // 保留
-    UINT linBaud;    // 波特率，取值1000~20000
+    BYTE maxLength;   // 最大数据长度，8~64
+    BYTE reserved;    // 保留
+    UINT linBaud;     // 波特率，取值1000~20000
 } ZCAN_LIN_INIT_CONFIG, *PZCAN_LIN_INIT_CONFIG;
 
 typedef struct _VCI_LIN_PUBLISH_CFG {
@@ -714,6 +716,12 @@ typedef BYTE ZCAN_UDS_FRAME_TYPE;
 #define ZCAN_UDS_FRAME_CANFD     1  // CANFD帧
 #define ZCAN_UDS_FRAME_CANFD_BRS 2  // CANFD加速帧
 
+// 数据长度填充模式
+typedef BYTE ZCAN_UDS_FILL_MODE;
+#define ZCAN_UDS_FILL_MODE_SHORT 0  // 小于8字节填充至8字节，大于8字节时按DLC就近填充
+#define ZCAN_UDS_FILL_MODE_NONE  1  // 不填充
+#define ZCAN_UDS_FILL_MODE_MAX   2  // 填充至最大数据长度(不建议)
+
 // CAN UDS请求数据
 typedef struct _ZCAN_UDS_REQUEST {
     UINT                req_id;             // 请求事务ID，范围0~65535，本次请求的唯一标识
@@ -740,16 +748,17 @@ typedef struct _ZCAN_UDS_REQUEST {
         BYTE block_size;    // 流控帧的块大小
         BYTE fill_byte;     // 无效字节的填充数据
         BYTE ext_frame;     // 0:标准帧 1:扩展帧
-        BYTE is_modify_ecu_st_min;  // 是否忽略ECU返回流控的STmin，强制使用本程序设置的
-                                    // remote_st_min
-        BYTE remote_st_min;         // 发送多帧时用，is_ignore_ecu_st_min = 1
-                                    // 时有效，0x00-0x7F(0ms~127ms)，0xF1-0xF9(100us~900us)
-        UINT fc_timeout;            // 接收流控超时时间(ms)，如发送首帧后需要等待回应流控帧
-        BYTE reserved0[4];          // 保留
-    } trans_param;                  // 传输层参数
-    BYTE *data;                     // 数据数组(不包含SID)
-    UINT  data_len;                 // 数据数组的长度
-    UINT  reserved2;                // 保留
+        BYTE is_modify_ecu_st_min;        // 是否忽略ECU返回流控的STmin，强制使用本程序设置的
+                                          // remote_st_min
+        BYTE remote_st_min;               // 发送多帧时用，is_ignore_ecu_st_min = 1
+                                          // 时有效，0x00-0x7F(0ms~127ms)，0xF1-0xF9(100us~900us)
+        UINT               fc_timeout;    // 接收流控超时时间(ms)，如发送首帧后需要等待回应流控帧
+        ZCAN_UDS_FILL_MODE fill_mode;     // 数据长度填充模式
+        BYTE               reserved0[3];  // 保留
+    } trans_param;                        // 传输层参数
+    BYTE *data;                           // 数据数组(不包含SID)
+    UINT  data_len;                       // 数据数组的长度
+    UINT  reserved2;                      // 保留
 } ZCAN_UDS_REQUEST;
 
 // LIN UDS请求数据
