@@ -1,7 +1,5 @@
-use rs_can::utils::{data_resize, system_timestamp};
+use rs_can::{{CanDirect, CanFrame, CanId}, utils::{data_resize, system_timestamp, can_dlc}};
 use std::fmt::{Display, Formatter};
-use isotp_rs::can::{CAN_FRAME_MAX_SIZE, frame::{Direct, Frame}};
-use isotp_rs::can::identifier::Id;
 
 #[repr(C)]
 #[derive(Debug, Clone)]
@@ -14,7 +12,7 @@ pub struct CanMessage {
     channel: String,
     length: usize,
     data: Vec<u8>,
-    direct: Direct,
+    direct: CanDirect,
     bitrate_switch: bool,
     error_state_indicator: bool,
 }
@@ -22,15 +20,15 @@ pub struct CanMessage {
 unsafe impl Send for CanMessage {}
 unsafe impl Sync for CanMessage {}
 
-impl Frame for CanMessage {
+impl CanFrame for CanMessage {
     type Channel = String;
     #[inline]
-    fn new(id: impl Into<Id>, data: &[u8]) -> Option<Self> {
+    fn new(id: impl Into<CanId>, data: &[u8]) -> Option<Self> {
         let length = data.len();
 
         match length {
             0..=8 => {
-                let id: Id = id.into();
+                let id: CanId = id.into();
                 Some(Self {
                     timestamp: 0,
                     arbitration_id: id.as_raw(),
@@ -50,7 +48,7 @@ impl Frame for CanMessage {
     }
 
     #[inline]
-    fn new_remote(id: impl Into<Id>, len: usize) -> Option<Self> {
+    fn new_remote(id: impl Into<CanId>, len: usize) -> Option<Self> {
         match len {
             0..=8 => {
                 let id = id.into();
@@ -86,8 +84,8 @@ impl Frame for CanMessage {
     }
 
     #[inline]
-    fn id(&self) -> Id {
-        Id::from_bits(self.arbitration_id, self.is_extended_id)
+    fn id(&self) -> CanId {
+        CanId::from_bits(self.arbitration_id, Some(self.is_extended_id))
     }
 
     #[inline]
@@ -111,12 +109,12 @@ impl Frame for CanMessage {
     }
 
     #[inline]
-    fn direct(&self) -> Direct {
+    fn direct(&self) -> CanDirect {
         self.direct.clone()
     }
 
     #[inline]
-    fn set_direct(&mut self, direct: Direct) -> &mut Self {
+    fn set_direct(&mut self, direct: CanDirect) -> &mut Self {
         self.direct = direct;
         self
     }
@@ -172,11 +170,7 @@ impl Frame for CanMessage {
 
     #[inline]
     fn dlc(&self) -> Option<usize> {
-        let len = self.length;
-        match len {
-            ..=CAN_FRAME_MAX_SIZE => Some(len),
-            _ => None,
-        }
+        can_dlc(self.length, false)
     }
 
     #[inline]
@@ -187,6 +181,6 @@ impl Frame for CanMessage {
 
 impl Display for CanMessage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        <dyn Frame<Channel = String> as Display>::fmt(self, f)
+        <dyn CanFrame<Channel = String> as Display>::fmt(self, f)
     }
 }

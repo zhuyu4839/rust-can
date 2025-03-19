@@ -1,17 +1,16 @@
 use std::time::Duration;
-use isotp_rs::can::frame::Frame;
-use isotp_rs::can::identifier::Id;
 use nican::{CanMessage, NiCan};
+use rs_can::{CanFrame, CanId};
 
 fn main() -> anyhow::Result<()> {
     let channel = "CAN0";
-    let mut driver = NiCan::new();
+    let mut driver = NiCan::new(None)?;
     driver.open(channel, vec![], 500_000, true)?;
 
     let data = vec![0x02, 0x10, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00];
     let mut count = 0;
     loop {
-        let mut msg = CanMessage::new(Id::from(0x7DF), data.as_slice()).unwrap();
+        let mut msg = CanMessage::new(CanId::from(0x7DF), data.as_slice()).unwrap();
         msg.set_channel(channel.into());
         driver.transmit_can(msg)?;
 

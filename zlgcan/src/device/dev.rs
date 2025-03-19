@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 use std::ffi::{c_uchar, c_ushort, CString};
 use std::fmt::{Display, Formatter};
-use rs_can::utils::system_timestamp;
+use rs_can::CanError;
 use crate::device::{DeriveInfo, ZCanDeviceType};
-use crate::error::ZCanError;
+
+const ID_LENGTH: usize = 40;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -13,9 +14,9 @@ pub struct ZDeviceInfo {
     drv: c_ushort,          //**< driver version */
     api: c_ushort,          //**< API version */
     irq: c_ushort,          //**< IRQ */
-    chn: c_uchar,           //**< channels */
+    pub(crate) chn: c_uchar,           //**< channels */
     sn: [c_uchar; 20],      //**< serial number */
-    id: [c_uchar; 40],      //**< card id */
+    id: [c_uchar; ID_LENGTH],      //**< card id */
     #[allow(dead_code)]
     pad: [c_ushort; 4],
 }
@@ -31,21 +32,25 @@ impl Default for ZDeviceInfo {
             irq: Default::default(),
             chn: Default::default(),
             sn: Default::default(),
-            id: [0; 40],
+            id: [Default::default(); ID_LENGTH],
             pad: Default::default(),
         }
     }
 }
 
 impl TryFrom<&DeriveInfo> for ZDeviceInfo {
-    type Error = ZCanError;
+    type Error = CanError;
     fn try_from(value: &DeriveInfo) -> Result<Self, Self::Error> {
         let device = if value.canfd {  "Derive USBCANFD device" } else { "Derive USBCAN device" };
-        let mut id = CString::new(device).as_ref().map_err(|e| ZCanError::CStringConvertFailed(e.to_string()))?.as_bytes().to_owned();
+        let mut id = CString::new(device)
+            .as_ref()
+            .map_err(|e| CanError::OtherError(e.to_string()))?
+            .as_bytes()
+            .to_owned();
         id.resize(40, 0);
         Ok(Self {
             chn: value.channels,
-            id: id.try_into().map_err(|v| ZCanError::CStringConvertFailed(format!("{:?}", v)))?,
+            id: id.try_into().map_err(|v| CanError::OtherError(format!("{:?}", v)))?,
             ..Default::default()
         })
     }
@@ -127,12 +132,16 @@ pub struct ZDeviceContext {
     pub(crate) dev_type: ZCanDeviceType,
     pub(crate) dev_idx: u32,
     pub(crate) dev_hdl: Option<u32>,
+    pub(crate) is_derive: bool,
 }
 
 impl ZDeviceContext {
     #[inline]
-    pub fn new(dev_type: ZCanDeviceType, dev_idx: u32, dev_hdl: Option<u32>) -> Self {
-        Self { dev_type, dev_idx, dev_hdl }
+    pub fn new(dev_type: ZCanDeviceType, dev_idx: u32, is_derive: bool) -> Self {
+        Self { dev_type, dev_idx, dev_hdl: Default::default(), is_derive }
+    }
+    pub fn is_derive(&self) -> bool {
+        self.is_derive
     }
     #[inline]
     pub fn device_type(&self) -> ZCanDeviceType {
@@ -143,8 +152,8 @@ impl ZDeviceContext {
         self.dev_idx
     }
     #[inline]
-    pub fn device_handler(&self) -> Result<u32, ZCanError> {
-        self.dev_hdl.ok_or(ZCanError::InvalidDeviceContext)
+    pub fn device_handler(&self) -> Result<u32, CanError> {
+        self.dev_hdl.ok_or(CanError::device_not_opened())
     }
     #[inline]
     pub fn set_device_handler(&mut self, handler: u32) {
@@ -178,7 +187,7 @@ impl ZChannelContext {
         self.device.dev_idx
     }
     #[inline]
-    pub fn device_handler(&self) -> Result<u32, ZCanError> {
+    pub fn device_handler(&self) -> Result<u32, CanError> {
         self.device.device_handler()
     }
     #[inline]
@@ -186,12 +195,12 @@ impl ZChannelContext {
         self.channel
     }
     #[inline]
-    pub fn channel_handler(&self) -> Result<u32, ZCanError> {
-        self.chl_hdl.ok_or(ZCanError::InvalidChannelContext)
+    pub fn channel_handler(&self) -> Result<u32, CanError> {
+        self.chl_hdl.ok_or(CanError::channel_not_opened(self.channel))
     }
     #[inline]
     pub fn set_channel_handler(&mut self, handler: Option<u32>) {
-        self.timestamp = system_timestamp();
+        // self.timestamp = system_timestamp();
         self.chl_hdl = handler;
     }
     #[inline]

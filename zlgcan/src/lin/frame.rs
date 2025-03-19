@@ -1,5 +1,5 @@
 use std::ffi::{c_uchar, c_ulong, c_ushort};
-use crate::error::ZCanError;
+use rs_can::CanError;
 use super::constant::{ZLinCheckSumMode, ZLinDataType};
 
 #[repr(C)]
@@ -64,8 +64,8 @@ impl ZLinFrameDataUnion {
         Self { event }
     }
 
-    pub fn from_raw() -> Self {
-        todo!()
+    pub fn from_raw(raw: [c_uchar; 46usize]) -> Self {
+        Self { raw }
     }
 }
 
@@ -74,6 +74,30 @@ pub struct ZLinFrame {
     pub chl: c_uchar,
     pub data_type: c_uchar,
     pub data: ZLinFrameDataUnion,
+}
+
+impl ZLinFrame {
+    pub fn default_data() -> Self {
+        Self {
+            chl: Default::default(),
+            data_type: ZLinDataType::TypeData as u8,
+            data: ZLinFrameDataUnion::from_data(Default::default()),
+        }
+    }
+    pub fn default_err() -> Self {
+        Self {
+            chl: Default::default(),
+            data_type: ZLinDataType::TypeError as u8,
+            data: ZLinFrameDataUnion::from_error(Default::default()),
+        }
+    }
+    pub fn default_event() -> Self {
+        Self {
+            chl: Default::default(),
+            data_type: ZLinDataType::TypeEvent as u8,
+            data: ZLinFrameDataUnion::from_event(Default::default()),
+        }
+    }
 }
 
 impl ZLinFrame {
@@ -121,7 +145,7 @@ pub struct ZLinPublishEx {
 }
 
 impl ZLinPublishEx {
-    pub fn new<T>(pid: u8, data: T, cs_mode: ZLinCheckSumMode) -> Result<Self, ZCanError>
+    pub fn new<T>(pid: u8, data: T, cs_mode: ZLinCheckSumMode) -> Result<Self, CanError>
         where
             T: AsRef<[u8]> {
         let mut data = Vec::from(data.as_ref());
@@ -132,12 +156,12 @@ impl ZLinPublishEx {
                 Ok(Self {
                     ID: pid,
                     dataLen: len as u8,
-                    data: data.try_into().map_err(|_| ZCanError::MessageConvertFailed)?,
+                    data: data.try_into().map_err(|_| CanError::OtherError("invalid data length".to_owned()))?,
                     chkSumMode: cs_mode as c_uchar,
                     reserved: Default::default(),
                 })
             },
-            _ => Err(ZCanError::ParamNotSupported),
+            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
         }
     }
 }

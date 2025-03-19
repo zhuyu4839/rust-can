@@ -1,5 +1,5 @@
 //! `typedef.rs` defined the zlgcan device type and some function supported feature.
-use crate::error::ZCanError;
+use rs_can::CanError;
 
 #[allow(non_camel_case_types, dead_code)]
 #[repr(C)]
@@ -163,13 +163,13 @@ impl From<ZCanDeviceType> for u32 {
 impl TryFrom<u32> for ZCanDeviceType {
     /// Attention!!!
     /// This method is unsafe if the value is too large
-    type Error = ZCanError;
+    type Error = CanError;
     fn try_from(value: u32) -> Result<Self, Self::Error> {
         let layout = std::alloc::Layout::new::<ZCanDeviceType>();
         unsafe {
             let vk: *mut ZCanDeviceType = std::alloc::alloc(layout).cast();
             if vk.is_null() {
-                Err(ZCanError::ParamNotSupported)
+                Err(CanError::OtherError("allocate memory failed".to_string()))
             }
             else {
                 let ptr = vk as *mut u32;

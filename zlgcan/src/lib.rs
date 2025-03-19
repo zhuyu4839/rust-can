@@ -8,28 +8,14 @@
 //! `cloud`module defined the struct for cloud device.
 //! `device` module defined the struct for device.
 //! `lin` module defined the LIN struct.
-//! The `error.rs` defined the only error struct.
 //! The `util.rs` defined utility functions.
 pub mod can;
 pub mod cloud;
 pub mod device;
 pub mod driver;
-pub mod error;
-// pub mod extends;
 pub mod lin;
 pub mod utils;
 
 mod api;
 mod constant;
 
-pub trait TryFrom<V, P>: Sized {
-    type Error;
-
-    fn try_from(value: V, timestamp: P) -> Result<Self, Self::Error>;
-}
-
-pub trait TryFromIterator<T, P>: Sized {
-    type Error;
-
-    fn try_from_iter<I: IntoIterator<Item = T>>(iter: I, timestamp: P) -> Result<Self, Self::Error>;
-}

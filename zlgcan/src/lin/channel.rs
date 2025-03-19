@@ -1,5 +1,5 @@
 use std::ffi::{c_uchar, c_uint};
-use crate::error::ZCanError;
+use rs_can::CanError;
 use super::constant::{ZLinCheckSumMode, ZLinMode};
 
 #[allow(non_snake_case)]
@@ -21,7 +21,7 @@ impl ZLinChlCfg {
         cs_mode: u8,
         bitrate: u32,
         max_len: Option<u8>
-    ) -> Result<Self, ZCanError> {
+    ) -> Result<Self, CanError> {
         let mode = ZLinMode::try_from(mode)?;
         let cs_mode = ZLinCheckSumMode::try_from(cs_mode)?;
         match max_len {
@@ -38,10 +38,10 @@ impl ZLinChlCfg {
                                     linBaud: bitrate
                                 })
                             },
-                            _ => Err(ZCanError::ParamNotSupported),
+                            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
                         }
                     },
-                    _ => Err(ZCanError::ParamNotSupported),
+                    _ => Err(CanError::OtherError("parameter not supported".to_owned())),
                 }
             },
             None => {
@@ -56,5 +56,3 @@ impl ZLinChlCfg {
         }
     }
 }
-
-

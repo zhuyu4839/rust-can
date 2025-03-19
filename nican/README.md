@@ -6,7 +6,7 @@
 ![MIT](https://img.shields.io/badge/license-MIT-yellow.svg)
 
 ## Overview
-**nican** is a driver for NI-USNCAN device(Only can use on windows x86 binary).
+**nican** is a driver for NI-USBCAN device(Only can use on windows x86 binary).
 
 It is a part of rust-can driver.
 

@@ -5,6 +5,8 @@
 
   - NI
     - USB-8473
+  
+  - SocketCan
 
   - ZLG(周立功) 
     - USBCAN-I/II

@@ -1,4 +1,4 @@
-use crate::error::ZCanError;
+use rs_can::CanError;
 
 pub enum ZLinMode {
     Slave = 0,
@@ -6,12 +6,12 @@ pub enum ZLinMode {
 }
 
 impl TryFrom<u8> for ZLinMode {
-    type Error = ZCanError;
+    type Error = CanError;
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(ZLinMode::Slave),
             1 => Ok(ZLinMode::Master),
-            _ => Err(ZCanError::ParamNotSupported),
+            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
         }
     }
 }
@@ -23,13 +23,13 @@ pub enum ZLinDataType {
 }
 
 impl TryFrom<u8> for ZLinDataType {
-    type Error = ZCanError;
+    type Error = CanError;
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(ZLinDataType::TypeData),
             1 => Ok(ZLinDataType::TypeError),
             2 => Ok(ZLinDataType::TypeEvent),
-            _ => Err(ZCanError::ParamNotSupported),
+            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
         }
     }
 }
@@ -41,13 +41,13 @@ pub enum ZLinEventType {
 }
 
 impl TryFrom<u8> for ZLinEventType {
-    type Error = ZCanError;
+    type Error = CanError;
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(ZLinEventType::Wakeup),
             1 => Ok(ZLinEventType::EnterSleep),
             2 => Ok(ZLinEventType::ExitSleep),
-            _ => Err(ZCanError::ParamNotSupported),
+            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
         }
     }
 }
@@ -59,13 +59,13 @@ pub enum ZLinCheckSumMode {
 }
 
 impl TryFrom<u8> for ZLinCheckSumMode {
-    type Error = ZCanError;
+    type Error = CanError;
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(ZLinCheckSumMode::Classic),
             1 => Ok(ZLinCheckSumMode::Enhance),
             2 => Ok(ZLinCheckSumMode::Auto),
-            _ => Err(ZCanError::ParamNotSupported),
+            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
         }
     }
 }

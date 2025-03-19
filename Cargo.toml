@@ -1,26 +1,31 @@
 [workspace]
 members = [
-#    "nican",
     "rs-can",
-    "zlgcan.new",
+#    "nican",    # only on 32bit Windows
+#    "socketcan",# only on Linux
     "zlgcan",
 ]
 
 resolver = "2"
 
 [workspace.dependencies]
-thiserror = "1"
+thiserror = "2"
 log = "0"
 dlopen2 = "0.7"
 bitflags = "2.6"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 dotenvy = "0.15"
-isotp-rs = { version = "0.2.1" }
+hex = "0.4"
+
+rs-can = { path = "rs-can" }
+#iso15765-2 = "0.1.0-alpha1"
+#iso14229-1 = "0.1.0-alpha1"
 
 # dev-dependencies
 anyhow = "1"
-hex-literal = "0.4"
+rand = "0.9"
+#hex-literal = "1"
 bin_file = "0.1"
 crc = "3.2"
-ecu-uds = { version = "0.1.5" }
+#docan = "0.1.0-alpha1"

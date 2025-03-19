@@ -1,21 +1,22 @@
 [package]
 name = "rs-can"
-version = "0.1.0-alpha1"
+version = "0.1.0-alpha3"
 edition = "2021"
-license = "GPL-3.0"
+license = "MIT OR GPL-3.0"
 authors = ["zhuyu <zhuyu4839@gmail.com>"]
 description = "A Nican driver."
 homepage = "https://github.com/zhuyu4839/rust-can"
 repository = "https://github.com/zhuyu4839/rust-can"
+keywords = [
+    "can",
+    "driver"
+]
 
 [dependencies]
 log = { workspace = true }
 bitflags = { workspace = true }
 thiserror = { workspace = true }
-isotp-rs = { workspace = true }
+hex = { workspace = true }
 
 [features]
 async = []
-
-[dev-dependencies]
-anyhow = { workspace = true }
