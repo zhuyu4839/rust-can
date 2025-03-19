@@ -44,6 +44,7 @@ impl ZCanFdChlCfgSet {
         }
     }
     /// Only used for USBCANFD-800U
+    #[allow(dead_code)]
     #[inline(always)]
     pub fn get_timing(&self) -> u32 {
         (self.brp as u32) << 22

@@ -1,9 +1,13 @@
 #![allow(unused)]
 
 #[cfg(target_os = "linux")]
-pub(crate) mod linux;
+mod linux;
+#[cfg(target_os = "linux")]
+pub(crate) use linux::*;
 #[cfg(target_os = "windows")]
-pub(crate) mod windows;
+mod windows;
+#[cfg(target_os = "windows")]
+pub(crate) use windows::*;
 
 use std::ffi::{c_char, c_void};
 use rs_can::CanError;

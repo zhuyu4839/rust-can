@@ -5,8 +5,7 @@ use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameTy
 use crate::cloud::{ZCloudGpsFrame, ZCloudServerInfo, ZCloudUserData};
 use crate::device::{DeriveInfo, Handler, ZCanDeviceType, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::lin::{ZLinChlCfg, ZLinFrame, ZLinPublish, ZLinPublishEx, ZLinSubscribe};
-use crate::api::{ZCanApi, ZCloudApi, ZDeviceApi, ZLinApi};
-use crate::api::windows::Api;
+use crate::api::{WinApi, ZCanApi, ZCloudApi, ZDeviceApi, ZLinApi};
 use crate::driver::ZDevice;
 
 #[cfg(target_arch = "x86")]
@@ -17,7 +16,7 @@ const LIB_PATH: &str = "windows/x86_64/";
 #[derive(Clone)]
 pub struct ZCanDriver {
     pub(crate) handler:    Option<Handler>,
-    pub(crate) api:        Arc<Container<Api<'static>>>,
+    pub(crate) api:        Arc<Container<WinApi<'static>>>,
     pub(crate) dev_type:   ZCanDeviceType,
     pub(crate) dev_idx:    u32,
     pub(crate) derive:     Option<DeriveInfo>,

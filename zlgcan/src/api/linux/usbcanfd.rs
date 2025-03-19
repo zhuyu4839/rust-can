@@ -440,10 +440,7 @@ mod tests {
             [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08].as_slice()
         )
             .ok_or(CanError::OtherError("invalid data length".to_string()))?;
-        let frames = vec![
-            ZCanFrame { can: ZCanFrameInner { usbcanfd: frame.into() } },
-            ZCanFrame { can: ZCanFrameInner { usbcanfd: frame1.into() } },
-        ];
+        let frames = vec![frame, frame1];
         let ret = api.transmit_can(&context, frames)?;
         assert_eq!(ret, 2);
 

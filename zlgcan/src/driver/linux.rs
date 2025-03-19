@@ -1,16 +1,12 @@
 use std::sync::Arc;
-use dlopen2::symbor::{Container};
+use dlopen2::symbor::Container;
 use rs_can::CanError;
 
 use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType, constant::{ZCAN_VAR, ZCAN_ENV, ZCAN_PATH_DEFAULT}};
 use crate::device::{DeriveInfo, Handler, ZCanDeviceType, ZChannelContext, ZDeviceContext, ZDeviceInfo};
-use crate::lin::{ZLinChlCfg, ZLinDataType, ZLinFrame, ZLinFrameDataUnion, ZLinPublish, ZLinSubscribe};
-use crate::api::linux::usbcan::USBCANApi;
-use crate::api::linux::usbcan_e::USBCANEApi;
-use crate::api::linux::usbcanfd::USBCANFDApi;
-use crate::api::linux::usbcanfd_800u::USBCANFD800UApi;
-use crate::api::{ZCanApi, ZDeviceApi, ZLinApi};
-use crate::driver::ZDevice;
+use crate::lin::{ZLinChlCfg, ZLinFrame, ZLinPublish, ZLinSubscribe};
+use crate::api::{USBCANApi, USBCANEApi, USBCANFDApi, USBCANFD800UApi, ZCanApi, ZDeviceApi, ZLinApi};
+use crate::driver::{lin_support, ZDevice};
 
 #[cfg(target_arch = "x86")]
 const LIB_PATH: &str = "linux/x86/";
@@ -531,9 +527,7 @@ impl ZDevice for ZCanDriver {
     }
 
     fn init_lin_chl(&mut self, cfg: Vec<ZLinChlCfg>) -> Result<(), CanError> {
-        if !self.dev_type.lin_support() {
-            return Err(CanError::NotSupportedError)
-        }
+        lin_support(self.dev_type)?;
         match &mut self.handler {
             Some(dev_hdl) => {
                 let channels = 2;   //dev_info.lin_channels();  // TODO
@@ -567,9 +561,7 @@ impl ZDevice for ZCanDriver {
     }
 
     fn reset_lin_chl(&mut self, channel: u8) -> Result<(), CanError> {
-        if !self.dev_type.lin_support() {
-            return Err(CanError::NotSupportedError)
-        }
+        lin_support(self.dev_type)?;
         match &mut self.handler {
             Some(dev_hdl) => {
                 match dev_hdl.find_lin(channel) {

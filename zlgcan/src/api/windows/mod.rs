@@ -13,7 +13,7 @@ use crate::constant::{STATUS_OFFLINE, STATUS_ONLINE, INTERNAL_RESISTANCE, PROTOC
 
 #[allow(non_snake_case)]
 #[derive(Debug, Clone, SymBorApi)]
-pub(crate) struct Api<'a> {
+pub(crate) struct WinApi<'a> {
     /// DEVICE_HANDLE FUNC_CALL ZCAN_OpenDevice(UINT device_type, UINT device_index, UINT reserved);
     ZCAN_OpenDevice: Symbol<'a, unsafe extern "C" fn(dev_type: c_uint, dev_index: c_uint, reserved: c_uint) -> c_uint>,
     /// UINT FUNC_CALL ZCAN_CloseDevice(DEVICE_HANDLE device_handle);
@@ -113,13 +113,13 @@ pub(crate) struct Api<'a> {
     // ZCAN_UDS_Request: Symbol<'a, unsafe extern "C" fn(chl_hdl: c_uint, req: *const ZCAN_UDS_REQUEST, resp: *mut ZCAN_UDS_RESPONSE, buff: *mut c_uchar, buff_size: c_uint) -> c_uint>,
 }
 
-impl Api<'_> {
+impl WinApi<'_> {
     const INVALID_DEVICE_HANDLE: u32 = 0;
     const INVALID_CHANNEL_HANDLE: u32 = 0;
     const STATUS_OK: u32 = 1;
 }
 
-impl ZDeviceApi for Api<'_> {
+impl ZDeviceApi for WinApi<'_> {
     fn open(&self, context: &mut ZDeviceContext) -> Result<(), CanError> {
         match unsafe { (self.ZCAN_OpenDevice)(context.device_type() as u32, context.device_index(), 0) } {
             Self::INVALID_DEVICE_HANDLE => Err(CanError::OperationError(format!("`ZCAN_OpenDevice` ret = {}", Self::INVALID_DEVICE_HANDLE))),
@@ -250,7 +250,7 @@ impl ZDeviceApi for Api<'_> {
     }
 }
 
-impl ZCanApi for Api<'_> {
+impl ZCanApi for WinApi<'_> {
     fn init_can_chl(&self, context: &mut ZChannelContext, cfg: &CanChlCfg) -> Result<(), CanError> {
         let dev_type = context.device_type();
         let channel = context.channel();
@@ -470,7 +470,7 @@ impl ZCanApi for Api<'_> {
     }
 }
 
-impl ZLinApi for Api<'_> {
+impl ZLinApi for WinApi<'_> {
     fn init_lin_chl(&self, context: &mut ZChannelContext, cfg: &ZLinChlCfg) -> Result<(), CanError> {
         unsafe {
             let dev_hdl = context.device_handler()?;
@@ -567,7 +567,7 @@ impl ZLinApi for Api<'_> {
     }
 }
 
-impl ZCloudApi for Api<'_> {
+impl ZCloudApi for WinApi<'_> {
     fn set_server(&self, server: ZCloudServerInfo) -> Result<(), CanError> {
         unsafe { (self.ZCLOUD_SetServerInfo)(server.http_url, server.http_port, server.mqtt_url, server.mqtt_port) }
 
@@ -620,7 +620,7 @@ impl ZCloudApi for Api<'_> {
 mod tests {
     use dlopen2::symbor::{Library, SymBorApi};
     // use crate::device::ZCanDeviceType;
-    use super::Api;
+    use super::WinApi;
 
     #[test]
     fn load_symbols() {
@@ -629,7 +629,7 @@ mod tests {
         let dll_path = "library/windows/x86_64/zlgcan.dll";
         let lib = Library::open(dll_path).expect("ZLGCAN - could not open library");
 
-        let _ = unsafe { Api::load(&lib) }.expect("ZLGCAN - could not load symbols!");
+        let _ = unsafe { WinApi::load(&lib) }.expect("ZLGCAN - could not load symbols!");
     }
 }
 
