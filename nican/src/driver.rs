@@ -101,15 +101,13 @@ impl NiCan {
             )
         };
         if ret != 0 {
-            return Err(CanError::OperationError(
-                "device configration error".into()
-            ));
+            return Err(CanError::operation_error("device configration error"));
         }
 
         let mut handle = 0;
         let ret = unsafe { (self.ncOpenObject)(chl_ascii.into_raw(), &mut handle) };
         if ret != 0 {
-            return Err(CanError::OperationError("device open error".into()));
+            return Err(CanError::operation_error("device open error"));
         }
 
         self.channels.insert(channel.into(), NiCanContext {
@@ -139,8 +137,7 @@ impl NiCan {
                         CanError::OperationError(info)
                     })
             },
-            None => Err(CanError::OperationError(
-                format!("channel {} not opened", Self::channel_info(&channel)))
+            None => Err(CanError::channel_not_opened(Self::channel_info(&channel))
             ),
         }
     }
@@ -163,9 +160,7 @@ impl NiCan {
                         CanError::OperationError(info)
                     })
             },
-            None => Err(CanError::OperationError(
-                format!("channel {} not opened", Self::channel_info(&channel))
-            )),
+            None => Err(CanError::channel_not_opened(Self::channel_info(&channel))),
         }
     }
 
@@ -193,9 +188,7 @@ impl NiCan {
 
                 Ok(())
             },
-            None => Err(CanError::OperationError(
-                format!("channel {} not opened", Self::channel_info(&channel))
-            )),
+            None => Err(CanError::channel_not_opened(Self::channel_info(&channel))),
         }
     }
 
@@ -207,7 +200,7 @@ impl NiCan {
                     if ret == constant::CanErrFunctionTimeout {
                         log::warn!(&info);
                     }
-                    return Err(CanError::OperationError(info));
+                    return Err(CanError::channel_timeout(Self::channel_info(&channel)));
                 }
 
                 let raw_msg = NCTYPE_CAN_STRUCT {
@@ -244,9 +237,7 @@ impl NiCan {
 
                 Ok(vec![msg, ])
             },
-            None => Err(CanError::OperationError(
-                format!("channel {} not opened", Self::channel_info(&channel))
-            )),
+            None => Err(CanError::channel_not_opened(Self::channel_info(&channel))),
         }
     }
 
@@ -277,9 +268,7 @@ impl NiCan {
     ) -> Result<R, CanError> {
         match self.channels.get(&channel) {
             Some(ctx) => cb(ctx),
-            None => Err(CanError::OperationError(
-                format!("channel {} not opened", Self::channel_info(&channel))
-            )),
+            None => Err(CanError::channel_not_opened(Self::channel_info(&channel))),
         }
     }
 

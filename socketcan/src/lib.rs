@@ -59,19 +59,19 @@ impl SocketCan {
                     FD_FRAME_SIZE => {
                         let frame = unsafe { *(&buffer as *const _ as *const canfd_frame) };
                         let mut frame = CanMessage::from(CanAnyFrame::from(frame));
-                        frame.set_direct(Direct::Receive);
+                        frame.set_direct(CanDirect::Receive);
                         Ok(frame)
                     },
                     XL_FRAME_SIZE => {
                         let frame = unsafe { *(&buffer as *const _ as *const canxl_frame) };
                         let mut frame = CanMessage::from(CanAnyFrame::from(frame));
-                        frame.set_direct(Direct::Receive);
+                        frame.set_direct(CanDirect::Receive);
                         Ok(frame)
                     },
                     _ => Err(CanError::OperationError(io::Error::last_os_error().to_string()))
                 }
             },
-            None => Err(CanError::ChannelNotOpened(channel.to_string()))
+            None => Err(CanError::channel_not_opened(channel))
         }
     }
 
@@ -86,11 +86,11 @@ impl SocketCan {
                 match poll::<u16>(&mut [pollfd], timeout.as_millis() as u16)
                     .map_err(|e| CanError::OperationError(e.to_string()))?
                 {
-                    0 => Err(CanError::TimeoutError(io::ErrorKind::TimedOut.to_string())),
+                    0 => Err(CanError::channel_timeout(channel)),
                     _ => self.read(channel),
                 }
             },
-            None => Err(CanError::ChannelNotOpened(channel.to_string())),
+            None => Err(CanError::channel_not_opened(channel)),
         }
     }
 
@@ -116,7 +116,7 @@ impl SocketCan {
                     },
                 }
             },
-            None => Err(CanError::ChannelNotOpened(channel))
+            None => Err(CanError::channel_not_opened(channel))
         }
     }
 
@@ -154,11 +154,11 @@ impl SocketCan {
                         return Ok(());
                     }
                 },
-                None => return Err(CanError::ChannelNotOpened(channel))
+                None => return Err(CanError::channel_not_opened(channel))
             }
         }
 
-        Err(CanError::TimeoutError("write frame timeout".to_string()))
+        Err(CanError::channel_timeout(channel))
     }
 
     /// Change socket to non-blocking mode or back to blocking mode.
@@ -187,7 +187,7 @@ impl SocketCan {
                     Ok(())
                 }
             },
-            None => Err(CanError::ChannelNotOpened(channel.to_string()))
+            None => Err(CanError::channel_not_opened(channel))
         }
     }
 
@@ -206,7 +206,7 @@ impl SocketCan {
                 )
                     .map_err(|e| CanError::OperationError(e.to_string()))
             },
-            None => Err(CanError::ChannelNotOpened(channel.to_string()))
+            None => Err(CanError::channel_not_opened(channel))
         }
     }
 
@@ -222,7 +222,7 @@ impl SocketCan {
                 )
                     .map_err(|e| CanError::OperationError(e.to_string()))
             },
-            None => Err(CanError::ChannelNotOpened(channel.to_string()))
+            None => Err(CanError::channel_not_opened(channel))
         }
     }
 }
@@ -250,7 +250,7 @@ impl SocketCan {
                 set_socket_option_mult(s.as_raw_fd(), SOL_CAN_RAW, CAN_RAW_FILTER, &filters)
                     .map_err(|e| CanError::OperationError(e.to_string()))
             },
-            None => Err(CanError::ChannelNotOpened(channel.to_string())),
+            None => Err(CanError::channel_not_opened(channel)),
         }
     }
 
@@ -264,7 +264,7 @@ impl SocketCan {
                 set_socket_option_mult(s.as_raw_fd(), SOL_CAN_RAW, CAN_RAW_FILTER, filters)
                     .map_err(|e| CanError::OperationError(e.to_string()))
             }
-            None => Err(CanError::ChannelNotOpened(channel.to_string())),
+            None => Err(CanError::channel_not_opened(channel)),
         }
     }
 
@@ -289,7 +289,7 @@ impl SocketCan {
                 set_socket_option(s.as_raw_fd(), SOL_CAN_RAW, CAN_RAW_ERR_FILTER, &mask)
                     .map_err(|e| CanError::OperationError(e.to_string()))
             }
-            None => Err(CanError::ChannelNotOpened(channel.to_string())),
+            None => Err(CanError::channel_not_opened(channel)),
         }
     }
 
@@ -317,7 +317,7 @@ impl SocketCan {
                 set_socket_option(s.as_raw_fd(), SOL_CAN_RAW, CAN_RAW_LOOPBACK, &loopback)
                     .map_err(|e| CanError::OperationError(e.to_string()))
             }
-            None => Err(CanError::ChannelNotOpened(channel.to_string())),
+            None => Err(CanError::channel_not_opened(channel)),
         }
     }
 
@@ -337,7 +337,7 @@ impl SocketCan {
                 )
                     .map_err(|e| CanError::OperationError(e.to_string()))
             }
-            None => Err(CanError::ChannelNotOpened(channel.to_string())),
+            None => Err(CanError::channel_not_opened(channel)),
         }
     }
 
