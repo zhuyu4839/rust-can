@@ -77,6 +77,7 @@ fn transmit_can(driver: &ZCanDriver, comm_count: u32, ext_count: u32, trans_ch: 
     assert_eq!(ret, ext_count);
 
     thread::sleep(Duration::from_millis(100));
+    let mut count = 0;
 
     loop {
         // waiting for receive message
@@ -90,7 +91,10 @@ fn transmit_can(driver: &ZCanDriver, comm_count: u32, ext_count: u32, trans_ch: 
             println!("receive frames: {cnt}");
             frames.iter().for_each(|f| println!("{}", f));
 
-            break;
+            count += 1;
+            if count >= 5 {
+                break;
+            }
         }
 
         thread::sleep(Duration::from_millis(100));
@@ -148,7 +152,7 @@ fn transmit_canfd(driver: &ZCanDriver, comm_count: u32, ext_count: u32, brs_coun
             break;
         }
 
-        let elapsed_time = SystemTime::now().duration_since(start_time).unwrap();
+        let elapsed_time = SystemTime::now().duration_since(start_time)?;
         if elapsed_time > timeout {
             panic!("timeout.....");
         }

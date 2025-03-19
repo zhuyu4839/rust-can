@@ -1,5 +1,5 @@
 use std::ffi::{c_uchar, c_uint, c_ushort};
-use rs_can::{CanDirect, MAX_FD_FRAME_SIZE, MAX_FRAME_SIZE};
+use rs_can::{CanDirect, DEFAULT_PADDING, MAX_FD_FRAME_SIZE, MAX_FRAME_SIZE};
 use crate::can::{CanMessage, constant::{TIME_FLAG_VALID, CANERR_FRAME_LENGTH}};
 
 /// only used usbcan on linux
@@ -24,15 +24,23 @@ impl Into<CanMessage> for ZCanFrameVCI {
         if self.time_flag != TIME_FLAG_VALID {
             log::warn!("ZCanFrameVCI - time flag is invalid")
         }
+        let timestamp = self.timestamp as u64;
+        let arbitration_id = self.can_id;
+        let is_extended_id = self.ext_flag > 0;
+        let is_remote_frame = self.rem_flag > 0;
+        let channel = self.channel;
+        let length = self.can_len as usize;
+        let mut data = self.data.to_vec();
+        data.resize(length, Default::default());
         CanMessage {
-            timestamp: self.timestamp as u64,
-            arbitration_id: self.can_id,
-            is_extended_id: self.ext_flag > 0,
-            is_remote_frame: self.rem_flag > 0,
+            timestamp,
+            arbitration_id,
+            is_extended_id,
+            is_remote_frame,
             is_error_frame: false,
-            channel: self.channel,
-            length: self.can_len as usize,
-            data: self.data.to_vec(),
+            channel,
+            length,
+            data,
             is_fd: false,
             direct: CanDirect::Receive,
             bitrate_switch: false,
@@ -53,7 +61,7 @@ impl From<CanMessage> for ZCanFrameVCI {
         let can_len = msg.length as u8;
         let channel = msg.channel;
         let mut data = msg.data;
-        data.resize(MAX_FRAME_SIZE, Default::default());
+        data.resize(MAX_FRAME_SIZE, DEFAULT_PADDING);
         Self {
             can_id,
             timestamp,
@@ -106,8 +114,9 @@ impl<const S: usize> Default for ZCanMsg20<S> {
 
 impl<const S: usize> Into<CanMessage> for ZCanMsg20<S> {
     fn into(self) -> CanMessage {
+        let length = self.can_len as usize;
         let mut data = self.data.to_vec();
-        data.resize(self.can_len as usize, Default::default());
+        data.resize(length, Default::default());
         let is_fd = (self.flags & (0x03 << 24)) >> 24;
         let is_fd = match is_fd {
             0x00 => false,
@@ -124,7 +133,7 @@ impl<const S: usize> Into<CanMessage> for ZCanMsg20<S> {
             is_remote_frame: (self.flags & (0x01 << 23)) > 0,
             is_error_frame: (self.flags & (0x01 << 21)) > 0,
             channel: self.channel,
-            length: self.can_len as usize,
+            length,
             data,
             is_fd,
             direct: CanDirect::Receive,
@@ -149,7 +158,7 @@ impl<const S: usize> From<CanMessage> for ZCanMsg20<S> {
         let channel = msg.channel;
         let can_len = msg.length as u8;
         let mut data = msg.data;
-        data.resize(S, Default::default());
+        data.resize(S, DEFAULT_PADDING);
         Self {
             timestamp,
             can_id,

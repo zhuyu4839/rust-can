@@ -2,7 +2,7 @@ use std::ffi::{c_uchar, c_uint, CString};
 use dlopen2::symbor::{Symbol, SymBorApi};
 use rs_can::CanError;
 
-use crate::can::{CanChlCfg, ZCanChlError, ZCanChlStatus, ZCanFrameType, ZCanFrame, ZCanChlCfg, ZCanFrameInner};
+use crate::can::{CanChlCfg, ZCanChlError, ZCanChlStatus, ZCanFrameType, ZCanFrame, ZCanChlCfg, ZCanFrameInner, CanMessage};
 use crate::device::{Handler, IProperty, SetValueFunc, ZCanDeviceType, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::constant::{channel_bitrate, channel_work_mode};
 use crate::api::{ZCanApi, ZCloudApi, ZDeviceApi, ZLinApi};
@@ -211,7 +211,7 @@ impl ZCanApi for USBCANEApi<'_> {
                         }
                     }
                 },
-                _ => Err(CanError::NotImplementedError),
+                _ => Err(CanError::NotSupportedError),
             }?;
 
             context.set_channel_handler(Some(handler));
@@ -257,7 +257,7 @@ impl ZCanApi for USBCANEApi<'_> {
         Ok(ret as u32)
     }
 
-    fn receive_can(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<ZCanFrame>, CanError> {
+    fn receive_can(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<CanMessage>, CanError> {
         let mut frames = Vec::new();
         frames.resize(size as usize, ZCanFrame { can: ZCanFrameInner { other: Default::default() } });
 
@@ -270,10 +270,19 @@ impl ZCanApi for USBCANEApi<'_> {
             log::trace!("ZLGCAN - receive CAN frame: {}", ret);
         }
 
-        Ok(frames)
+        Ok(frames.into_iter()
+            .map(|mut frame| unsafe {
+                frame.can.other.set_channel(context.channel());
+                frame.can.other.into()
+            })
+            .collect::<Vec<_>>())
     }
 
-    fn transmit_can(&self, context: &ZChannelContext, frames: Vec<ZCanFrame>) -> Result<u32, CanError> {
+    fn transmit_can(&self, context: &ZChannelContext, frames: Vec<CanMessage>) -> Result<u32, CanError> {
+        let frames = frames.into_iter()
+            .map(|mut frame| ZCanFrame { can: ZCanFrameInner { other: frame.into() } })
+            .collect::<Vec<_>>();
+
         let len = frames.len() as u32;
         let ret = unsafe { (self.ZCAN_Transmit)(context.channel_handler()?, frames.as_ptr(), len) };
         let ret = ret as u32;
@@ -300,7 +309,7 @@ mod tests {
     use super::USBCANEApi;
 
     #[test]
-    fn usbcan_4e_u() {
+    fn usbcan_4e_u() -> anyhow::Result<()> {
         let dev_type = ZCanDeviceType::ZCAN_USBCAN_4E_U;
         let dev_idx = 0;
         let so_path = "library/linux/x86_64/libusbcan-4e.so";
@@ -313,19 +322,19 @@ mod tests {
             let dev_hdl = (api.ZCAN_OpenDevice)(dev_type as u32, dev_idx, 0);
             if dev_hdl == USBCANEApi::INVALID_DEVICE_HANDLE {
                 println!("Can't open the device!");
-                return;
+                return Ok(());
             }
             let mut dev_info = ZDeviceInfo::default();
             let ret = (api.ZCAN_GetDeviceInf)(dev_hdl, &mut dev_info);
             if ret != USBCANEApi::STATUS_OK {
                 println!("Can't get the device info!");
-                return;
+                return Ok(());
             }
 
             let p = (api.GetIProperty)(dev_hdl);
             if p.is_null() {
                 println!("Get property failed!");
-                return;
+                return Ok(());
             }
             let func = (*p).SetValue.expect("Can't get SetValue function!");
 
@@ -341,8 +350,8 @@ mod tests {
                     println!("Reset channel: {} failed!", chl);
                 }
 
-                let path = CString::new(format!("info/channel/channel_{}/baud_rate", chl)).unwrap();
-                let bitrate = CString::new(500_000.to_string()).unwrap();
+                let path = CString::new(format!("info/channel/channel_{}/baud_rate", chl))?;
+                let bitrate = CString::new(500_000.to_string())?;
 
                 // let func = (*p).SetValue.expect("Can't get SetValue function!");
                 let ret = func(path.as_ptr(), bitrate.as_ptr());
@@ -376,5 +385,7 @@ mod tests {
                 println!("ZCAN_CloseDevice failed!");
             }
         }
+
+        Ok(())
     }
 }

@@ -1,5 +1,5 @@
 use std::fmt::{Display, Formatter};
-use rs_can::{CanDirect, CanFrame, CanId, MAX_FRAME_SIZE, utils::{can_dlc, data_resize, is_can_fd_len}};
+use rs_can::{CanDirect, CanFrame, CanId, MAX_FRAME_SIZE, utils::{can_dlc, is_can_fd_len}};
 use crate::can::ZCanTxMode;
 
 #[repr(C)]
@@ -57,8 +57,7 @@ impl CanFrame for CanMessage {
         match is_can_fd_len(len) {
             Ok(is_fd) => {
                 let id = id.into();
-                let mut data = Vec::new();
-                data_resize(&mut data, len);
+
                 Some(Self {
                     timestamp: 0,
                     arbitration_id: id.as_raw(),
@@ -67,7 +66,7 @@ impl CanFrame for CanMessage {
                     is_error_frame: false,
                     channel: Default::default(),
                     length: len,
-                    data,
+                    data: Default::default(),
                     is_fd,
                     direct: Default::default(),
                     bitrate_switch: false,

@@ -2,7 +2,7 @@ use std::ffi::{c_char, c_int, c_uchar, c_uint, c_ushort, c_void, CString};
 use std::pin::Pin;
 use rs_can::CanError;
 use dlopen2::symbor::{Symbol, SymBorApi};
-use crate::can::{CanChlCfg, ZCanChlError, ZCanChlStatus, ZCanChlType, ZCanFrame, ZCanFrameType, ZCanChlCfg, ZCanFrameInner, ZCanFdFrameInner};
+use crate::can::{CanChlCfg, ZCanChlError, ZCanChlStatus, ZCanChlType, ZCanFrame, ZCanFrameType, ZCanChlCfg, ZCanFrameInner, ZCanFdFrameInner, CanMessage};
 use crate::cloud::{ZCloudGpsFrame, ZCloudServerInfo, ZCloudUserData};
 use crate::device::{CmdPath, IProperty, ZCanDeviceType, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::lin::{ZLinChlCfg, ZLinFrame, ZLinPublish, ZLinPublishEx, ZLinSubscribe};
@@ -181,7 +181,7 @@ impl ZDeviceApi for Api<'_> {
                     Ok(ret)
                 }
             } else {
-                Err(CanError::NotImplementedError)
+                Err(CanError::NotSupportedError)
             }
         }
     }
@@ -217,7 +217,7 @@ impl ZDeviceApi for Api<'_> {
                     });
                     Ok(())
                 },
-                None => Err(CanError::NotImplementedError),
+                None => Err(CanError::NotSupportedError),
             }
         }
     }
@@ -244,7 +244,7 @@ impl ZDeviceApi for Api<'_> {
 
                     Ok(result)
                 },
-                None => Err(CanError::NotImplementedError),
+                None => Err(CanError::NotSupportedError),
             }
         }
     }
@@ -362,9 +362,9 @@ impl ZCanApi for Api<'_> {
         Ok(ret)
     }
 
-    fn receive_can(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<ZCanFrame>, CanError> {
+    fn receive_can(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<CanMessage>, CanError> {
         let mut frames = Vec::new();
-        frames.resize(size as usize, ZCanFrame { can: ZCanFrameInner { tx: Default::default() } });
+        frames.resize(size as usize, ZCanFrame { can: ZCanFrameInner { rx: Default::default() } });
 
         // let ret = unsafe { (self.ZCAN_Receive)(context.channel_handler()?, frames.as_mut_ptr(), size, timeout) };
         // if ret < size {
@@ -383,27 +383,24 @@ impl ZCanApi for Api<'_> {
         if count < size {
             log::warn!("ZLGCAN - receive CAN frame expect: {}, actual: {}!", size, count);
         }
-        frames.iter_mut()
-            .for_each(|frame| unsafe { frame.can.rx.frame.set_channel(context.channel()); } );
 
-        Ok(frames)
+        Ok(frames.into_iter()
+            .map(|mut frame| unsafe {
+                frame.can.rx.frame.set_channel(context.channel());
+                frame.can.rx.into()
+            })
+            .collect::<Vec<_>>())
     }
 
-    fn transmit_can(&self, context: &ZChannelContext, frames: Vec<ZCanFrame>) -> Result<u32, CanError> {
+    fn transmit_can(&self, context: &ZChannelContext, frames: Vec<CanMessage>) -> Result<u32, CanError> {
+        let frames = frames.into_iter()
+            .map(|msg| ZCanFrame { can: ZCanFrameInner { tx: msg.into() } })
+            .collect::<Vec<_>>();
+
         let len = frames.len() as u32;
         let chl_hdl = context.channel_handler()?;
         // method 1
         // let ret = unsafe { (self.ZCAN_Transmit)(chl_hdl, frames.as_ptr(), len) };
-        // if ret < len {
-        //     log::warn!("ZLGCAN - transmit CAN frame expect: {}, actual: {}!", len, ret);
-        // }
-        // Ok(ret)
-        // method 2
-        // let mut boxed_slice: Box<[ZCanFrame]> = frames.into_boxed_slice();
-        // let array: *mut ZCanFrame = boxed_slice.as_mut_ptr();
-        // // let ptr = frames.as_ptr();
-        // let ret = unsafe { (self.ZCAN_Transmit)(chl_hdl, array, len) };
-        // std::mem::forget(boxed_slice);
         // if ret < len {
         //     log::warn!("ZLGCAN - transmit CAN frame expect: {}, actual: {}!", len, ret);
         // }
@@ -423,9 +420,9 @@ impl ZCanApi for Api<'_> {
         Ok(count)
     }
 
-    fn receive_canfd(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<ZCanFrame>, CanError> {
+    fn receive_canfd(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<CanMessage>, CanError> {
         let mut frames = Vec::new();
-        frames.resize(size as usize, ZCanFrame { canfd: ZCanFdFrameInner { tx: Default::default() } });
+        frames.resize(size as usize, ZCanFrame { canfd: ZCanFdFrameInner { rx: Default::default() } });
 
         let mut count = 0;
         for i in 0..size as usize {
@@ -437,13 +434,20 @@ impl ZCanApi for Api<'_> {
         if count < size {
             log::warn!("ZLGCAN - receive CANFD frame expect: {}, actual: {}!", size, count);
         }
-        frames.iter_mut()
-            .for_each(|frame| unsafe { frame.canfd.rx.frame.set_channel(context.channel()); } );
 
-        Ok(frames)
+        Ok(frames.into_iter()
+            .map(|mut frame| unsafe {
+                frame.canfd.rx.frame.set_channel(context.channel());
+                frame.canfd.rx.into()
+            })
+            .collect::<Vec<_>>())
     }
 
-    fn transmit_canfd(&self, context: &ZChannelContext, frames: Vec<ZCanFrame>) -> Result<u32, CanError> {
+    fn transmit_canfd(&self, context: &ZChannelContext, frames: Vec<CanMessage>) -> Result<u32, CanError> {
+        let frames = frames.into_iter()
+            .map(|msg| ZCanFrame { canfd: ZCanFdFrameInner { tx: msg.into() } })
+            .collect::<Vec<_>>();
+
         let len = frames.len() as u32;
         let chl_hdl = context.channel_handler()?;
         // let ret = unsafe { (self.ZCAN_TransmitFD)(chl_hdl, frames.as_ptr(), len) };

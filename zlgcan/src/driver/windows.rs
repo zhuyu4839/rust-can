@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use dlopen2::symbor::Container;
 use rs_can::CanError;
-use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType, constant::{ZCAN_VAR, ZCAN_ENV, ZCAN_PATH_DEFAULT}, ZCanFrame, ZCanFrameInner, ZCanFdFrameInner};
+use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType, constant::{ZCAN_VAR, ZCAN_ENV, ZCAN_PATH_DEFAULT}};
 use crate::cloud::{ZCloudGpsFrame, ZCloudServerInfo, ZCloudUserData};
 use crate::device::{DeriveInfo, Handler, ZCanDeviceType, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::lin::{ZLinChlCfg, ZLinFrame, ZLinPublish, ZLinPublishEx, ZLinSubscribe};
@@ -82,7 +82,7 @@ impl ZDevice for ZCanDriver {
     fn device_info(&self) -> Result<&ZDeviceInfo, CanError> {
         match &self.handler {
             Some(handler) => Ok(&handler.device_info()),
-            None => Err(CanError::OperationError("device is not opened".to_string())),
+            None => Err(CanError::device_not_opened()),
         }
     }
 
@@ -120,7 +120,7 @@ impl ZDevice for ZCanDriver {
                 }
                 Ok(())
             },
-            None => Err(CanError::OperationError("device is not opened".to_string())),
+            None => Err(CanError::device_not_opened()),
         }
     }
 
@@ -133,10 +133,10 @@ impl ZDevice for ZCanDriver {
                         dev_hdl.remove_can(channel);
                         Ok(())
                     },
-                    None => Err(CanError::OperationError(format!("channel: {} is not opened", channel))),
+                    None => Err(CanError::channel_not_opened(channel)),
                 }
             },
-            None => Err(CanError::OperationError("device is not opened".to_string())),
+            None => Err(CanError::device_not_opened()),
         }
     }
 
@@ -166,19 +166,12 @@ impl ZDevice for ZCanDriver {
 
     fn receive_can(&self, channel: u8, size: u32, timeout: Option<u32>) -> Result<Vec<CanMessage>, CanError> {
         let timeout = timeout.unwrap_or(u32::MAX);
-        let frames = self.can_handler(channel, |context| {
+        self.can_handler(channel, |context| {
             self.api.receive_can(context, size, timeout)
-        })?;
-
-        Ok(frames.into_iter()
-            .map(|frame| unsafe { frame.can.rx.into() })
-            .collect::<Vec<_>>())
+        })
     }
 
     fn transmit_can(&self, channel: u8, frames: Vec<CanMessage>) -> Result<u32, CanError> {
-        let frames = frames.into_iter()
-            .map(|msg| ZCanFrame { can: ZCanFrameInner { tx: msg.into() } })
-            .collect::<Vec<_>>();
         self.can_handler(channel, |context| {
             self.api.transmit_can(context, frames)
         })
@@ -186,28 +179,19 @@ impl ZDevice for ZCanDriver {
 
     fn receive_canfd(&self, channel: u8, size: u32, timeout: Option<u32>) -> Result<Vec<CanMessage>, CanError> {
         let timeout = timeout.unwrap_or(u32::MAX);
-        let frames = self.can_handler(channel, |context| {
+        self.can_handler(channel, |context| {
             self.api.receive_canfd(context, size, timeout)
-        })?;
-
-        Ok(frames.into_iter()
-            .map(|frame| unsafe { frame.canfd.rx.into() })
-            .collect::<Vec<_>>())
+        })
     }
 
     fn transmit_canfd(&self, channel: u8, frames: Vec<CanMessage>) -> Result<u32, CanError> {
-        let frames = frames.into_iter()
-            .map(|msg| ZCanFrame { canfd: ZCanFdFrameInner { tx: msg.into() } })
-            .collect::<Vec<_>>();
         self.can_handler(channel, |context| {
             self.api.transmit_canfd(context, frames)
         })
     }
 
     fn init_lin_chl(&mut self, cfg: Vec<ZLinChlCfg>) -> Result<(), CanError> {
-        if !self.dev_type.lin_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::lin_support(self.dev_type)?;
         match &mut self.handler {
             Some(dev_hdl) => {
                 let channels = 2;   //dev_info.lin_channels();  // TODO
@@ -230,14 +214,12 @@ impl ZDevice for ZCanDriver {
 
                 Ok(())
             },
-            None => Err(CanError::OperationError("device is not opened".to_string())),
+            None => Err(CanError::device_not_opened()),
         }
     }
 
     fn reset_lin_chl(&mut self, channel: u8) -> Result<(), CanError> {
-        if !self.dev_type.lin_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::lin_support(self.dev_type)?;
         match &mut self.handler {
             Some(dev_hdl) => {
                 match dev_hdl.find_lin(channel) {
@@ -246,26 +228,22 @@ impl ZDevice for ZCanDriver {
                         dev_hdl.remove_lin(channel);
                         Ok(())
                     },
-                    None => Err(CanError::OperationError(format!("channel: {} is not opened", channel))),
+                    None => Err(CanError::channel_not_opened(channel)),
                 }
             },
-            None => Err(CanError::OperationError("device is not opened".to_string())),
+            None => Err(CanError::device_not_opened()),
         }
     }
 
     fn get_lin_num(&self, channel: u8) -> Result<u32, CanError> {
-        if !self.dev_type.lin_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::lin_support(self.dev_type)?;
         self.lin_handler(channel, |context| {
             self.api.get_lin_num(context)
         })
     }
 
     fn receive_lin(&self, channel: u8, size: u32, timeout: Option<u32>) -> Result<Vec<ZLinFrame>, CanError> {
-        if !self.dev_type.lin_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::lin_support(self.dev_type)?;
         let timeout = timeout.unwrap_or(u32::MAX);
         self.lin_handler(channel, |context| {
             self.api.receive_lin(context, size, timeout)
@@ -273,45 +251,35 @@ impl ZDevice for ZCanDriver {
     }
 
     fn transmit_lin(&self, channel: u8, frames: Vec<ZLinFrame>) -> Result<u32, CanError> {
-        if !self.dev_type.lin_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::lin_support(self.dev_type)?;
         self.lin_handler(channel, |context| {
             self.api.transmit_lin(context, frames)
         })
     }
 
     fn set_lin_subscribe(&self, channel: u8, cfg: Vec<ZLinSubscribe>) -> Result<(), CanError> {
-        if !self.dev_type.lin_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::lin_support(self.dev_type)?;
         self.lin_handler(channel, |context| {
             self.api.set_lin_subscribe(context, cfg)
         })
     }
 
     fn set_lin_publish(&self, channel: u8, cfg: Vec<ZLinPublish>) -> Result<(), CanError> {
-        if !self.dev_type.lin_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::lin_support(self.dev_type)?;
         self.lin_handler(channel, |context| {
             self.api.set_lin_publish(context, cfg)
         })
     }
 
     fn set_lin_publish_ext(&self, channel: u8, cfg: Vec<ZLinPublishEx>) -> Result<(), CanError> {
-        if !self.dev_type.lin_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::lin_support(self.dev_type)?;
         self.lin_handler(channel, |context| {
             self.api.set_lin_publish_ex(context, cfg)
         })
     }
 
     fn wakeup_lin(&self, channel: u8) -> Result<(), CanError> {
-        if !self.dev_type.lin_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::lin_support(self.dev_type)?;
         self.lin_handler(channel, |context| {
             self.api.wakeup_lin(context)
         })
@@ -319,9 +287,7 @@ impl ZDevice for ZCanDriver {
 
     #[allow(deprecated)]
     fn set_lin_slave_msg(&self, channel: u8, msg: Vec<ZLinFrame>) -> Result<(), CanError> {
-        if !self.dev_type.lin_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::lin_support(self.dev_type)?;
         self.lin_handler(channel, |context| {
             self.api.set_lin_slave_msg(context, msg)
         })
@@ -329,53 +295,39 @@ impl ZDevice for ZCanDriver {
 
     #[allow(deprecated)]
     fn clear_lin_slave_msg(&self, channel: u8, pids: Vec<u8>) -> Result<(), CanError> {
-        if !self.dev_type.lin_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::lin_support(self.dev_type)?;
         self.lin_handler(channel, |context| {
             self.api.clear_lin_slave_msg(context, pids)
         })
     }
 
     fn set_server(&self, server: ZCloudServerInfo) -> Result<(), CanError> {
-        if !self.dev_type.cloud_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::cloud_support(self.dev_type)?;
         self.api.set_server(server)
     }
 
     fn connect_server(&self, username: &str, password: &str) -> Result<(), CanError> {
-        if !self.dev_type.cloud_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::cloud_support(self.dev_type)?;
         self.api.connect_server(username, password)
     }
 
     fn is_connected_server(&self) -> Result<bool, CanError> {
-        if !self.dev_type.cloud_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::cloud_support(self.dev_type)?;
         self.api.is_connected_server()
     }
 
     fn disconnect_server(&self) -> Result<(), CanError> {
-        if !self.dev_type.cloud_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::cloud_support(self.dev_type)?;
         self.api.disconnect_server()
     }
 
     fn get_userdata(&self, update: Option<i32>) -> Result<ZCloudUserData, CanError> {
-        if !self.dev_type.cloud_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::cloud_support(self.dev_type)?;
         self.api.get_userdata(update.unwrap_or(0))
     }
 
     fn receive_gps(&self, size: u32, timeout: Option<u32>) -> Result<Vec<ZCloudGpsFrame>, CanError> {
-        if !self.dev_type.cloud_support() {
-            return Err(CanError::NotImplementedError);
-        }
+        super::cloud_support(self.dev_type)?;
 
         let timeout = timeout.unwrap_or(u32::MAX);
         self.device_handler(|hdl| {
@@ -393,7 +345,7 @@ impl ZDevice for ZCanDriver {
             C: FnOnce(&Handler) -> Result<T, CanError> {
         match &self.handler {
             Some(v) => callback(v),
-            None => Err(CanError::OperationError("device is not opened".to_string())),
+            None => Err(CanError::device_not_opened()),
         }
     }
 }

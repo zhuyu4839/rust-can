@@ -2,7 +2,7 @@ use dlopen2::symbor::{Symbol, SymBorApi};
 use std::ffi::{c_uint, c_void, CString};
 use rs_can::CanError;
 
-use crate::can::{CanChlCfg, Reference, ZCanFrameType, ZCanChlError, ZCanChlStatus, ZCanFrame, ZCanFdChlCfgInner, get_fd_cfg, ZCanFrameInner, ZCanFdFrameInner};
+use crate::can::{CanChlCfg, Reference, ZCanFrameType, ZCanChlError, ZCanChlStatus, ZCanFrame, ZCanFdChlCfgInner, get_fd_cfg, ZCanFrameInner, ZCanFdFrameInner, CanMessage};
 use crate::device::{CmdPath, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::lin::{ZLinChlCfg, ZLinFrame, ZLinPublish, ZLinSubscribe};
 use crate::api::{ZCanApi, ZCloudApi, ZDeviceApi, ZLinApi};
@@ -138,7 +138,7 @@ impl ZDeviceApi for USBCANFDApi<'_> {
             Ok(ret.as_ptr() as *const c_void)
         }
         else {
-            Err(CanError::NotImplementedError)
+            Err(CanError::NotSupportedError)
         }
     }
 
@@ -234,7 +234,7 @@ impl ZCanApi for USBCANFDApi<'_> {
         Ok(ret)
     }
 
-    fn receive_can(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<ZCanFrame>, CanError> {
+    fn receive_can(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<CanMessage>, CanError> {
         let (dev_type, dev_idx, channel) = (context.device_type(), context.device_index(), context.channel());
         let mut frames = Vec::new();
         frames.resize(size as usize, ZCanFrame { can: ZCanFrameInner { usbcanfd: Default::default() } });
@@ -246,10 +246,19 @@ impl ZCanApi for USBCANFDApi<'_> {
         else if ret > 0 {
             log::trace!("ZLGCAN - receive CAN frame: {}", ret);
         }
-        Ok(frames)
+
+        Ok(frames.into_iter()
+            .map(|frame| unsafe {
+                frame.can.usbcanfd.into()
+            })
+            .collect::<Vec<_>>())
     }
 
-    fn transmit_can(&self, context: &ZChannelContext, frames: Vec<ZCanFrame>) -> Result<u32, CanError> {
+    fn transmit_can(&self, context: &ZChannelContext, frames: Vec<CanMessage>) -> Result<u32, CanError> {
+        let frames = frames.into_iter()
+            .map(|frame| ZCanFrame { can: ZCanFrameInner { usbcanfd: frame.into() } })
+            .collect::<Vec<_>>();
+
         let (dev_type, dev_idx, channel) = (context.device_type(), context.device_index(), context.channel());
         let len = frames.len() as u32;
         let ret = unsafe { (self.VCI_Transmit)(dev_type as u32, dev_idx, channel as u32, frames.as_ptr(), len) };
@@ -262,7 +271,7 @@ impl ZCanApi for USBCANFDApi<'_> {
         Ok(ret)
     }
 
-    fn receive_canfd(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<ZCanFrame>, CanError> {
+    fn receive_canfd(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<CanMessage>, CanError> {
         let (dev_type, dev_idx, channel) = (context.device_type(), context.device_index(), context.channel());
         let mut frames = Vec::new();
         frames.resize(size as usize, ZCanFrame { canfd: ZCanFdFrameInner { usbcanfd: Default::default() } });
@@ -274,10 +283,19 @@ impl ZCanApi for USBCANFDApi<'_> {
         else if ret > 0 {
             log::trace!("ZLGCAN - receive CAN-FD frame: {}", ret);
         }
-        Ok(frames)
+
+        Ok(frames.into_iter()
+            .map(|mut frame| unsafe {
+                frame.canfd.usbcanfd.into()
+            })
+            .collect::<Vec<_>>())
     }
 
-    fn transmit_canfd(&self, context: &ZChannelContext, frames: Vec<ZCanFrame>) -> Result<u32, CanError> {
+    fn transmit_canfd(&self, context: &ZChannelContext, frames: Vec<CanMessage>) -> Result<u32, CanError> {
+        let frames = frames.into_iter()
+            .map(|frame| ZCanFrame { canfd: ZCanFdFrameInner { usbcanfd: frame.into() } })
+            .collect::<Vec<_>>();
+
         let (dev_type, dev_idx, channel) = (context.device_type(), context.device_index(), context.channel());
         let len = frames.len() as u32;
         let ret = unsafe { (self.VCI_TransmitFD)(dev_type as u32, dev_idx, channel as u32, frames.as_ptr(), len) };

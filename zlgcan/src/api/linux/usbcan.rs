@@ -2,7 +2,7 @@ use std::ffi::c_void;
 use dlopen2::symbor::{Symbol, SymBorApi};
 use rs_can::CanError;
 
-use crate::can::{CanChlCfg, ZCanFrame, ZCanChlError, ZCanChlStatus, ZCanFrameType, common::ZCanChlCfgInner, ZCanFrameInner};
+use crate::can::{CanChlCfg, ZCanFrame, ZCanChlError, ZCanChlStatus, ZCanFrameType, common::ZCanChlCfgInner, ZCanFrameInner, CanMessage};
 use crate::device::{CmdPath, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::api::{ZCanApi, ZCloudApi, ZDeviceApi, ZLinApi};
 
@@ -169,7 +169,7 @@ impl ZCanApi for USBCANApi<'_> {
         Ok(ret)
     }
 
-    fn receive_can(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<ZCanFrame>, CanError> {
+    fn receive_can(&self, context: &ZChannelContext, size: u32, timeout: u32) -> Result<Vec<CanMessage>, CanError> {
         let (dev_type, dev_idx, channel) = (context.device_type(), context.device_index(), context.channel());
         let mut frames = Vec::new();
         frames.resize(size as usize, ZCanFrame { can: ZCanFrameInner { usbcan: Default::default() } });
@@ -181,10 +181,19 @@ impl ZCanApi for USBCANApi<'_> {
         else if ret > 0 {
             log::trace!("ZLGCAN - receive CAN frame: {}", ret);
         }
-        Ok(frames)
+
+        Ok(frames.into_iter()
+            .map(|mut frame| unsafe {
+                frame.can.usbcan.into()
+            })
+            .collect::<Vec<_>>())
     }
 
-    fn transmit_can(&self, context: &ZChannelContext, frames: Vec<ZCanFrame>) -> Result<u32, CanError> {
+    fn transmit_can(&self, context: &ZChannelContext, frames: Vec<CanMessage>) -> Result<u32, CanError> {
+        let frames = frames.into_iter()
+            .map(|frame| ZCanFrame { can: ZCanFrameInner { usbcan: frame.into() } })
+            .collect::<Vec<_>>();
+
         let (dev_type, dev_idx, channel) = (context.device_type(), context.device_index(), context.channel());
         let len = frames.len() as u32;
         let ret = unsafe { (self.VCI_Transmit)(dev_type as u32, dev_idx, channel as u32, frames.as_ptr(), len) };
@@ -249,10 +258,7 @@ mod tests {
             [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08].as_slice()
         )
             .ok_or(CanError::OtherError("invalid data length".to_string()))?;
-        let frames = vec![
-            ZCanFrame { can: ZCanFrameInner { usbcan: frame.into() } },
-            ZCanFrame { can: ZCanFrameInner { usbcan: frame1.into() } },
-        ];
+        let frames = vec![frame, frame1];
         let ret = api.transmit_can(&context, frames)?;
         assert_eq!(ret, 2);
 

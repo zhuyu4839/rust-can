@@ -121,29 +121,6 @@ pub(crate) fn get_fd_cfg(
         aset,
         dset,
     ))
-    // match dev_type {
-    //     ZCanDeviceType::ZCAN_USBCAN_4E_U |
-    //     ZCanDeviceType::ZCAN_USBCANFD_800U => {
-    //
-    //     },
-    //     _ => {
-    //         let timing0 = aset.get_timing();    // 4458527 = 0x44081f
-    //         let timing1 = dset.get_timing();    // 4260357 = 0x410205
-    //         Ok(ZCanChlCfgUnion {
-    //             canfd: ZCanFdChlCfgUnion {
-    //                 v2: super::common::ZCanFdChlCfgInner::new(
-    //                     mode,
-    //                     timing0,
-    //                     timing1,
-    //                     extra.filter,
-    //                     extra.acc_code,
-    //                     extra.acc_mask,
-    //                     extra.brp,
-    //                 )?
-    //             }
-    //         })
-    //     },
-    // }
 }
 
 fn get_fd_set(

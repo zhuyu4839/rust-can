@@ -43,42 +43,32 @@ impl ZCanChlCfg {
 
 impl TryFrom<&CanChlCfg> for ZCanChlCfg {
     type Error = CanError;
-    fn try_from(value: &CanChlCfg) -> Result<Self, Self::Error> {
-        let dev_type = value.dev_type;
-        let binding = value.cfg_ctx.upgrade()
+    fn try_from(cfg: &CanChlCfg) -> Result<Self, Self::Error> {
+        let dev_type = cfg.dev_type;
+        let binding = cfg.cfg_ctx.upgrade()
             .ok_or(CanError::OtherError("Failed to upgrade configuration context".to_string()))?;
         let cfg_ctx = binding.get(&dev_type.to_string())
             .ok_or(CanError::OtherError(format!("device: {:?} is not configured in file!", dev_type)))?;
-        let dev_type = value.device_type()?;
+        let dev_type = cfg.device_type()?;
 
         let cfg = if dev_type.canfd_support() {
-            // #[cfg(target_os = "windows")]
             let cfg = ZCanChlCfgUnion {
                 canfd: common::ZCanFdChlCfgInner::new(
-                    value.mode,
+                    cfg.mode,
                     0,  // TODO timing0 and timing1 ignored
                     0,
-                    value.extra.filter,
-                    value.extra.acc_code,
-                    value.extra.acc_mask,
-                    value.extra.brp)?
+                    cfg.extra.filter,
+                    cfg.extra.acc_code,
+                    cfg.extra.acc_mask,
+                    cfg.extra.brp)?
             };
-            // #[cfg(target_os = "linux")]
-            // let cfg = get_fd_cfg(
-            //     dev_type,
-            //     ZCanChlType::try_from(value.can_type)?,
-            //     value.mode,
-            //     value.bitrate,
-            //     cfg_ctx,
-            //     &value.extra,
-            // )?;
 
             Ok(cfg)
         }
         else {
-            let bitrate = value.bitrate;
+            let bitrate = cfg.bitrate;
             Ok(ZCanChlCfgUnion {
-                can: common::ZCanChlCfgInner::try_from_with(cfg_ctx, value.mode, bitrate, value.extra())?
+                can: common::ZCanChlCfgInner::try_from_with(cfg_ctx, cfg.mode, bitrate, cfg.extra())?
             })
         }?;
 

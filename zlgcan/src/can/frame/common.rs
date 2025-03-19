@@ -1,6 +1,7 @@
 use std::ffi::{c_uchar, c_uint};
 use std::fmt::{Display, Formatter};
-use rs_can::CanError;
+use rs_can::{CanDirect, CanError, IdentifierFlags, DEFAULT_PADDING, EFF_MASK, MAX_FRAME_SIZE};
+use crate::can::{CanMessage, constant::{CANFD_BRS, CANFD_ESI}};
 
 /// Then CAN frame type used in crate.
 #[repr(C)]
@@ -77,13 +78,6 @@ pub(crate) struct ZCanMsg20<const S: usize> {
 }
 
 impl<const S: usize> ZCanMsg20<S> {
-    // pub fn new(
-    //     can_id: c_uint,
-    //     can_len: c_uchar,
-    //     data: [c_uchar; S],
-    // ) -> Self {
-    //     Self::new_fd(can_id, can_len, Default::default(), data)
-    // }
     pub fn new(
         can_id: c_uint,
         can_len: c_uchar,
@@ -125,198 +119,56 @@ impl<const S: usize> Default for ZCanMsg20<S> {
     }
 }
 
-// #[derive(Debug, Copy, Clone)]
-// pub(crate) enum ZCanHdrInfoField {
-//     TxMode = 1,
-//     FrameType = 2,
-//     IsRemoteFrame = 3,
-//     IsExtendFrame = 4,
-//     IsErrorFrame = 5,
-//     IsBitrateSwitch = 6,
-//     IsErrorStateIndicator = 7,
-// }
-//
-// impl TryFrom<u8> for ZCanHdrInfoField {
-//     type Error = CanError;
-//     fn try_from(value: u8) -> Result<Self, Self::Error> {
-//         match value {
-//             1 => Ok(ZCanHdrInfoField::TxMode),
-//             2 => Ok(ZCanHdrInfoField::FrameType),
-//             3 => Ok(ZCanHdrInfoField::IsRemoteFrame),
-//             4 => Ok(ZCanHdrInfoField::IsExtendFrame),
-//             5 => Ok(ZCanHdrInfoField::IsErrorFrame),
-//             6 => Ok(ZCanHdrInfoField::IsBitrateSwitch),
-//             7 => Ok(ZCanHdrInfoField::IsErrorStateIndicator),
-//             _ => Err(CanError::OtherError("parameter not supported".to_owned())),
-//         }
-//     }
-// }
-//
-// #[repr(C)]
-// #[derive(Debug, Default, Copy, Clone)]
-// pub(crate) struct ZCanHdrInfo {
-//     mode: c_uchar,  // U8 txm : 4; /**< TX-mode, @see ZCAN_TX_MODE */
-//     // U8 fmt : 4; /**< 0-CAN2.0, 1-CANFD */
-//     flag: c_uchar,  // U8 sdf : 1; /**< 0-data_frame, 1-remote_frame */
-//                     // U8 sef : 1; /**< 0-std_frame, 1-ext_frame */
-//                     // U8 err : 1; /**< error flag */
-//                     // U8 brs : 1; /**< bit-rate switch */
-//                     // U8 est : 1; /**< error state */
-//                     // 5~7bit not used
-//     #[allow(dead_code)]
-//     pad: c_ushort,  // U16 pad : 16;
-// }
-//
-// impl ZCanHdrInfo {
-//     /// It may result in unexpected errors that setting value out of range.
-//     /// ZCanFrameInfoField::TxMode 0~15
-//     /// ZCanFrameInfoField::FrameType 0~15
-//     /// Others: 0~1
-//     #[inline(always)]
-//     pub fn set_field(&mut self, field: ZCanHdrInfoField, value: u8) -> &mut Self {
-//         let value = value as u32;
-//         match field {
-//             ZCanHdrInfoField::TxMode => self.mode = (self.mode & 0xF0) | ((value & 0x0F) as u8), // self.mode = (self.mode & 0xF0) | ((value & 0x0F) as u8) << 0,
-//             ZCanHdrInfoField::FrameType => self.mode = (self.mode & 0x0F) | ((value & 0x0F) as u8) << 4,
-//             ZCanHdrInfoField::IsRemoteFrame => self.flag = (self.flag & (0xFF - 1)) | ((value & 0x01) as u8), // self.flag = (self.flag & (0xFE)) | ((value & 0x01) as u8) << 0,
-//             ZCanHdrInfoField::IsExtendFrame => self.flag = (self.flag & (0xFF - (1 << 1))) | ((value & 0x01) as u8) << 1,
-//             ZCanHdrInfoField::IsErrorFrame => self.flag = (self.flag & (0xFF - (1 << 2))) | ((value & 0x01) as u8) << 2,
-//             ZCanHdrInfoField::IsBitrateSwitch => self.flag = (self.flag & (0xFF - (1 << 3))) | ((value & 0x01) as u8) << 3,
-//             ZCanHdrInfoField::IsErrorStateIndicator => self.flag = (self.flag & (0xFF - (1 << 4))) | ((value & 0x01) as u8) << 4,
-//         }
-//         self
-//     }
-//
-//     #[inline(always)]
-//     pub fn get_field(&self, field: ZCanHdrInfoField) -> u8 {
-//         match field {
-//             ZCanHdrInfoField::TxMode => self.mode & 0x0F,     //(self.mode & 0x0F) >> 0,
-//             ZCanHdrInfoField::FrameType => (self.mode & 0xF0) >> 4,
-//             ZCanHdrInfoField::IsRemoteFrame => self.flag & (1 << 0),   // (self.flag & (1 << 0)) >> 0,
-//             ZCanHdrInfoField::IsExtendFrame => (self.flag & (1 << 1)) >> 1,
-//             ZCanHdrInfoField::IsErrorFrame => (self.flag & (1 << 2)) >> 2,
-//             ZCanHdrInfoField::IsBitrateSwitch => (self.flag & (1 << 3)) >> 3,
-//             ZCanHdrInfoField::IsErrorStateIndicator => (self.flag & (1 << 4)) >> 4,
-//         }
-//     }
-//
-//     #[inline(always)]
-//     pub fn value(&self) -> u32 {
-//         ((self.mode as u32) << 24) |
-//             ((self.flag as u32) << 16) |
-//             self.pad as u32
-//     }
-// }
-//
-// #[inline]
-// pub(crate) fn set_extend(info: &mut ZCanHdrInfo, can_id: u32) {
-//     if (can_id & IdentifierFlags::EXTENDED.bits()) > 0 {
-//         info.set_field(ZCanHdrInfoField::IsExtendFrame, 1);
-//     }
-// }
-//
-// #[inline]
-// pub(crate) fn set_remote(info: &mut ZCanHdrInfo, can_id: u32) {
-//     if (can_id & IdentifierFlags::REMOTE.bits()) > 0 {
-//         info.set_field(ZCanHdrInfoField::IsRemoteFrame, 1);
-//     }
-// }
-//
-// #[inline]
-// pub(crate) fn set_error(info: &mut ZCanHdrInfo, can_id: u32) {
-//     if (can_id & IdentifierFlags::ERROR.bits()) > 0 {
-//         info.set_field(ZCanHdrInfoField::IsErrorFrame, 1);
-//     }
-// }
-//
-// #[cfg(test)]
-// mod tests {
-//     use super::{ZCanFrameType, ZCanHdrInfo, ZCanHdrInfoField, ZCanTxMode};
-//
-//     #[test]
-//     fn frame_info() {
-//         let info: ZCanHdrInfo = Default::default();
-//         assert_eq!(info.mode, 0);
-//         assert_eq!(info.flag, 0);
-//         assert_eq!(info.pad, 0);
-//
-//         let mut info: ZCanHdrInfo = Default::default();
-//         info.set_field(ZCanHdrInfoField::TxMode, ZCanTxMode::Normal as u8);
-//         assert_eq!(info.mode, 0);
-//         assert_eq!(info.flag, 0);
-//         assert_eq!(info.pad, 0);
-//         info.set_field(ZCanHdrInfoField::TxMode, ZCanTxMode::Once as u8);
-//         assert_eq!(info.mode, 1);
-//         assert_eq!(info.flag, 0);
-//         assert_eq!(info.pad, 0);
-//         info.set_field(ZCanHdrInfoField::TxMode, ZCanTxMode::SelfReception as u8);
-//         assert_eq!(info.mode, 2);
-//         assert_eq!(info.flag, 0);
-//         assert_eq!(info.pad, 0);
-//         info.set_field(ZCanHdrInfoField::TxMode, ZCanTxMode::SelfReceptionOnce as u8);
-//         assert_eq!(info.mode, 3);
-//         assert_eq!(info.flag, 0);
-//         assert_eq!(info.pad, 0);
-//
-//         let mut info: ZCanHdrInfo = Default::default();
-//         info.set_field(ZCanHdrInfoField::FrameType, ZCanFrameType::CAN as u8);
-//         assert_eq!(info.mode, 0x0);
-//         assert_eq!(info.flag, 0);
-//         assert_eq!(info.pad, 0);
-//         info.set_field(ZCanHdrInfoField::FrameType, ZCanFrameType::CANFD as u8);
-//         assert_eq!(info.mode, 0x10);
-//         assert_eq!(info.flag, 0);
-//         assert_eq!(info.pad, 0);
-//
-//         let mut info: ZCanHdrInfo = Default::default();
-//         info.set_field(ZCanHdrInfoField::IsRemoteFrame, 0);
-//         assert_eq!(info.mode, 0x0);
-//         assert_eq!(info.flag, 0);
-//         assert_eq!(info.pad, 0);
-//         info.set_field(ZCanHdrInfoField::IsRemoteFrame, 1);
-//         assert_eq!(info.mode, 0x0);
-//         assert_eq!(info.flag, 0x01);
-//         assert_eq!(info.pad, 0);
-//
-//         let mut info: ZCanHdrInfo = Default::default();
-//         info.set_field(ZCanHdrInfoField::IsExtendFrame, 0);
-//         assert_eq!(info.mode, 0x0);
-//         assert_eq!(info.flag, 0);
-//         assert_eq!(info.pad, 0);
-//         info.set_field(ZCanHdrInfoField::IsExtendFrame, 1);
-//         assert_eq!(info.mode, 0x0);
-//         assert_eq!(info.flag, 0x02);
-//         assert_eq!(info.pad, 0);
-//
-//         let mut info: ZCanHdrInfo = Default::default();
-//         info.set_field(ZCanHdrInfoField::IsErrorFrame, 0);
-//         assert_eq!(info.mode, 0x0);
-//         assert_eq!(info.flag, 0);
-//         assert_eq!(info.pad, 0);
-//         info.set_field(ZCanHdrInfoField::IsErrorFrame, 1);
-//         assert_eq!(info.mode, 0x0);
-//         assert_eq!(info.flag, 0x04);
-//         assert_eq!(info.pad, 0);
-//
-//         let mut info: ZCanHdrInfo = Default::default();
-//         info.set_field(ZCanHdrInfoField::IsBitrateSwitch, 0);
-//         assert_eq!(info.mode, 0x0);
-//         assert_eq!(info.flag, 0);
-//         assert_eq!(info.pad, 0);
-//         info.set_field(ZCanHdrInfoField::IsBitrateSwitch, 1);
-//         assert_eq!(info.mode, 0x0);
-//         assert_eq!(info.flag, 0x08);
-//         assert_eq!(info.pad, 0);
-//
-//         let mut info: ZCanHdrInfo = Default::default();
-//         info.set_field(ZCanHdrInfoField::IsErrorStateIndicator, 0);
-//         assert_eq!(info.mode, 0x0);
-//         assert_eq!(info.flag, 0);
-//         assert_eq!(info.pad, 0);
-//         info.set_field(ZCanHdrInfoField::IsErrorStateIndicator, 1);
-//         assert_eq!(info.mode, 0x0);
-//         assert_eq!(info.flag, 0x10);
-//         assert_eq!(info.pad, 0);
-//     }
-// }
+impl<const S: usize> Into<CanMessage> for ZCanMsg20<S> {
+    fn into(self) -> CanMessage {
+        let is_fd = S > MAX_FRAME_SIZE;
 
+        let can_id = self.can_id;
+        let length = self.can_len as usize;
+        let mut data = self.data.to_vec();
+        data.resize(length, Default::default());
+        CanMessage {
+            timestamp: Default::default(),
+            arbitration_id: can_id & EFF_MASK,
+            is_extended_id: (can_id & IdentifierFlags::EXTENDED.bits()) > 0,
+            is_remote_frame: (can_id & IdentifierFlags::REMOTE.bits()) > 0,
+            is_error_frame: (can_id & IdentifierFlags::ERROR.bits()) > 0,
+            channel: self.__res0,
+            length,
+            data,
+            is_fd,
+            direct: CanDirect::Receive,
+            bitrate_switch: if is_fd { self.flags & CANFD_BRS > 0 } else { false },
+            error_state_indicator: if is_fd { self.flags & CANFD_ESI > 0 } else { false },
+            tx_mode: None,
+        }
+    }
+}
+
+impl<const S: usize> From<CanMessage> for ZCanMsg20<S> {
+    fn from(msg: CanMessage) -> Self {
+        let is_fd = S > MAX_FRAME_SIZE;
+
+        let can_id = can_id_add_flags(&msg);
+        let length = msg.data.len() as u8;
+        let flags = if is_fd {
+            (if msg.bitrate_switch { CANFD_BRS } else { Default::default() }) |
+            (if msg.error_state_indicator { CANFD_ESI } else { Default::default() })
+        }
+        else {
+            Default::default()
+        };
+        let mut data = msg.data;
+        data.resize(S, DEFAULT_PADDING);
+
+        Self::new(can_id, length, flags, data.try_into().unwrap())
+    }
+}
+
+// pub(crate) type ZCanChlError = ZCanChlErrorInner;
+fn can_id_add_flags(msg: &CanMessage) -> u32 {
+    msg.arbitration_id |
+        if msg.is_extended_id { IdentifierFlags::EXTENDED.bits() } else { Default::default() } |
+        if msg.is_remote_frame { IdentifierFlags::REMOTE.bits() } else { Default::default() } |
+        if msg.is_error_frame { IdentifierFlags::ERROR.bits() } else { Default::default() }
+}

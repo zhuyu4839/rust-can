@@ -153,7 +153,7 @@ impl ZDeviceContext {
     }
     #[inline]
     pub fn device_handler(&self) -> Result<u32, CanError> {
-        self.dev_hdl.ok_or(CanError::OperationError("device is not opened".to_string()))
+        self.dev_hdl.ok_or(CanError::device_not_opened())
     }
     #[inline]
     pub fn set_device_handler(&mut self, handler: u32) {
@@ -196,7 +196,7 @@ impl ZChannelContext {
     }
     #[inline]
     pub fn channel_handler(&self) -> Result<u32, CanError> {
-        self.chl_hdl.ok_or(CanError::OperationError(format!("channel: {} is not opened", self.channel)))
+        self.chl_hdl.ok_or(CanError::channel_not_opened(self.channel))
     }
     #[inline]
     pub fn set_channel_handler(&mut self, handler: Option<u32>) {
