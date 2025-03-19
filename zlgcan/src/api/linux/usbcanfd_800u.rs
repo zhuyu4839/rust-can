@@ -400,8 +400,8 @@ impl ZCanApi for USBCANFD800UApi<'_> {
 
         Ok(frames.into_iter()
             .map(|mut frame| unsafe {
-                frame.can.other.set_channel(context.channel());
-                frame.can.other.into()
+                frame.canfd.other.set_channel(context.channel());
+                frame.canfd.other.into()
             })
             .collect::<Vec<_>>())
     }
