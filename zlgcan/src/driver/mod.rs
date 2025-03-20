@@ -1,4 +1,4 @@
-use rs_can::{CanDevice, CanError, CanFrame, CanResult};
+use rs_can::{CanDevice, CanError, CanFrame, CanResult, CanType};
 use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType};
 use crate::cloud::{ZCloudGpsFrame, ZCloudServerInfo, ZCloudUserData};
 use crate::device::{DeriveInfo, Handler, ZCanDeviceType, ZChannelContext, ZDeviceInfo};
@@ -31,12 +31,11 @@ impl CanDevice for ZCanDriver {
 
     fn transmit(&self, msg: Self::Frame, _: Option<u32>) -> CanResult<(), CanError> {
         let channel = msg.channel();
-        if msg.is_can_fd() {
-            self.transmit_canfd(channel, vec![msg, ])?;
-        }
-        else {
-            self.transmit_can(channel, vec![msg, ])?;
-        }
+        let _ = match msg.can_type() {
+            CanType::Can => self.transmit_can(channel, vec![msg, ]),
+            CanType::CanFd => self.transmit_canfd(channel, vec![msg, ]),
+            CanType::CanXl => Err(CanError::NotSupportedError),
+        }?;
 
         Ok(())
     }

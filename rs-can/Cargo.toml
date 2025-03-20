@@ -16,7 +16,6 @@ keywords = [
 log = { workspace = true }
 bitflags = { workspace = true }
 thiserror = { workspace = true }
-hex = { workspace = true }
 
 [features]
 async = []

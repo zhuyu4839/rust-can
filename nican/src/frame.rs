@@ -1,4 +1,4 @@
-use rs_can::{{CanDirect, CanFrame, CanId}, utils::{data_resize, system_timestamp, can_dlc}};
+use rs_can::{{CanDirect, CanFrame, CanId}, can_utils, CanType};
 use std::fmt::{Display, Formatter};
 
 #[repr(C)]
@@ -53,7 +53,7 @@ impl CanFrame for CanMessage {
             0..=8 => {
                 let id = id.into();
                 let mut data = Vec::new();
-                data_resize(&mut data, len);
+                can_utils::data_resize(&mut data, len);
                 Some(Self {
                     timestamp: 0,
                     arbitration_id: id.as_raw(),
@@ -79,7 +79,7 @@ impl CanFrame for CanMessage {
 
     #[inline]
     fn set_timestamp(&mut self, value: Option<u64>) -> &mut Self {
-        self.timestamp = value.unwrap_or_else(system_timestamp);
+        self.timestamp = value.unwrap_or_else(can_utils::system_timestamp);
         self
     }
 
@@ -89,12 +89,12 @@ impl CanFrame for CanMessage {
     }
 
     #[inline]
-    fn is_can_fd(&self) -> bool {
-        false
+    fn can_type(&self) -> CanType {
+        CanType::Can
     }
 
     #[inline]
-    fn set_can_fd(&mut self, _: bool) -> &mut Self {
+    fn set_can_type(&mut self, _: bool) -> &mut Self {
         self
     }
 
@@ -166,11 +166,6 @@ impl CanFrame for CanMessage {
     #[inline]
     fn data(&self) -> &[u8] {
         self.data.as_slice()
-    }
-
-    #[inline]
-    fn dlc(&self) -> Option<usize> {
-        can_dlc(self.length, false)
     }
 
     #[inline]

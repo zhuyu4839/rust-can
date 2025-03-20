@@ -10,7 +10,6 @@ repository = "https://github.com/zhuyu4839/rust-can"
 
 [dependencies]
 log = { workspace = true }
-thiserror = { workspace = true }
 winapi = { version = "0.3", features = ["errhandlingapi", "libloaderapi", "winnt", ] }
 rs-can = { workspace = true }
 

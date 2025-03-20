@@ -1,5 +1,5 @@
 use std::fmt::{Display, Formatter};
-use rs_can::{CanDirect, CanFrame, CanId, MAX_FRAME_SIZE, utils::{can_dlc, is_can_fd_len}};
+use rs_can::{CanDirect, CanFrame, CanId, CanType, MAX_FRAME_SIZE, MAX_FD_FRAME_SIZE, MAX_XL_FRAME_SIZE, can_utils};
 use crate::can::ZCanTxMode;
 
 #[repr(C)]
@@ -13,7 +13,7 @@ pub struct CanMessage {
     pub(crate) channel: u8,
     pub(crate) length: usize,
     pub(crate) data: Vec<u8>,
-    pub(crate) is_fd: bool,
+    pub(crate) can_type: CanType,
     pub(crate) direct: CanDirect,
     pub(crate) bitrate_switch: bool,
     pub(crate) error_state_indicator: bool,
@@ -29,8 +29,8 @@ impl CanFrame for CanMessage {
     fn new(id: impl Into<CanId>, data: &[u8]) -> Option<Self> {
         let length = data.len();
 
-        match is_can_fd_len(length) {
-            Ok(is_fd) => {
+        match can_utils::can_type(length) {
+            Ok(can_type) => {
                 let id: CanId = id.into();
                 Some(Self {
                     timestamp: 0,
@@ -41,7 +41,7 @@ impl CanFrame for CanMessage {
                     channel: Default::default(),
                     length,
                     data: data.to_vec(),
-                    is_fd,
+                    can_type,
                     direct: Default::default(),
                     bitrate_switch: false,
                     error_state_indicator: false,
@@ -54,8 +54,8 @@ impl CanFrame for CanMessage {
 
     #[inline]
     fn new_remote(id: impl Into<CanId>, len: usize) -> Option<Self> {
-        match is_can_fd_len(len) {
-            Ok(is_fd) => {
+        match can_utils::can_type(len) {
+            Ok(can_type) => {
                 let id = id.into();
 
                 Some(Self {
@@ -67,7 +67,7 @@ impl CanFrame for CanMessage {
                     channel: Default::default(),
                     length: len,
                     data: Default::default(),
-                    is_fd,
+                    can_type,
                     direct: Default::default(),
                     bitrate_switch: false,
                     error_state_indicator: false,
@@ -84,7 +84,7 @@ impl CanFrame for CanMessage {
     }
 
     #[inline]
-    fn set_timestamp(&mut self, value: Option<u64>) -> &mut Self where Self: Sized {
+    fn set_timestamp(&mut self, value: Option<u64>) -> &mut Self {
         self.timestamp = value.unwrap_or_default();
         self
     }
@@ -95,22 +95,28 @@ impl CanFrame for CanMessage {
     }
 
     #[inline]
-    fn is_can_fd(&self) -> bool {
-        self.is_fd
+    fn can_type(&self) -> CanType {
+        self.can_type
     }
 
     #[inline]
-    fn set_can_fd(&mut self, value: bool) -> &mut Self where Self: Sized {
-        if !value {
-            match self.length {
-                9.. => {
-                    log::warn!("resize a fd-frame to: {}", MAX_FRAME_SIZE);
-                    self.length = MAX_FRAME_SIZE;
-                },
-                _ => {},
-            }
+    fn set_can_type(&mut self, r#type: CanType) -> &mut Self {
+        match r#type {
+            CanType::Can => if self.length > MAX_FRAME_SIZE {
+                log::warn!("resize a frame to: {}", MAX_FRAME_SIZE);
+                self.length = MAX_FRAME_SIZE;
+            },
+            CanType::CanFd => if self.length > MAX_FD_FRAME_SIZE {
+                log::warn!("resize a frame to: {}", MAX_FD_FRAME_SIZE);
+                self.length = MAX_FD_FRAME_SIZE;
+            },
+            CanType::CanXl => if self.length > MAX_XL_FRAME_SIZE {
+                log::warn!("resize a frame to: {}", MAX_XL_FRAME_SIZE);
+                self.length = MAX_XL_FRAME_SIZE;
+            },
         }
-        self.is_fd = value;
+
+        self.can_type = r#type;
         self
     }
 
@@ -130,7 +136,7 @@ impl CanFrame for CanMessage {
     }
 
     #[inline]
-    fn set_direct(&mut self, direct: CanDirect) -> &mut Self where Self: Sized {
+    fn set_direct(&mut self, direct: CanDirect) -> &mut Self {
         self.direct = direct;
         self
     }
@@ -141,7 +147,7 @@ impl CanFrame for CanMessage {
     }
 
     #[inline]
-    fn set_bitrate_switch(&mut self, value: bool) -> &mut Self where Self: Sized {
+    fn set_bitrate_switch(&mut self, value: bool) -> &mut Self {
         self.bitrate_switch = value;
         self
     }
@@ -152,7 +158,7 @@ impl CanFrame for CanMessage {
     }
 
     #[inline]
-    fn set_error_frame(&mut self, value: bool) -> &mut Self where Self: Sized {
+    fn set_error_frame(&mut self, value: bool) -> &mut Self {
         self.is_error_frame = value;
         self
     }
@@ -163,7 +169,7 @@ impl CanFrame for CanMessage {
     }
 
     #[inline]
-    fn set_esi(&mut self, value: bool) -> &mut Self where Self: Sized {
+    fn set_esi(&mut self, value: bool) -> &mut Self {
         self.error_state_indicator = value;
         self
     }
@@ -174,7 +180,7 @@ impl CanFrame for CanMessage {
     }
 
     #[inline]
-    fn set_channel(&mut self, value: Self::Channel) -> &mut Self where Self: Sized {
+    fn set_channel(&mut self, value: Self::Channel) -> &mut Self {
         self.channel = value;
         self
     }
@@ -182,11 +188,6 @@ impl CanFrame for CanMessage {
     #[inline]
     fn data(&self) -> &[u8] {
         self.data.as_slice()
-    }
-
-    #[inline]
-    fn dlc(&self) -> Option<usize> {
-        can_dlc(self.length, self.is_fd)
     }
 
     #[inline]
