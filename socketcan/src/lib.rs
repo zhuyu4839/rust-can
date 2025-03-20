@@ -48,7 +48,11 @@ impl SocketCan {
             Some(s) => {
                 let mut buffer = [0; XL_FRAME_SIZE];
 
-                let rd = unsafe { read(s.as_raw_fd(), &mut buffer as *mut _ as *mut c_void, XL_FRAME_SIZE) } as usize;
+                let rd = unsafe { read(
+                    s.as_raw_fd(),
+                    &mut buffer as *mut _ as *mut c_void,
+                    XL_FRAME_SIZE
+                ) };
                 match rd {
                     FRAME_SIZE => {
                         let frame = unsafe { *(&buffer as *const _ as *const can_frame) };

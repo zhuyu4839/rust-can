@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::ffi::{c_char, c_void, CStr, CString};
+use std::ffi::{c_char, CStr, CString};
 use winapi::{shared::minwindef::HMODULE, um::{errhandlingapi::GetLastError, libloaderapi::{LoadLibraryA, GetProcAddress}, winnt::LPCSTR}};
 use rs_can::{CanDevice, CanError, CanFilter, CanFrame, CanResult};
 use crate::{api::*, CanMessage, constant};
@@ -95,9 +95,9 @@ impl NiCan {
         let ret = unsafe {
             (self.ncConfig)(
                 chl_ascii.clone().into_raw(),
-                attr_id.len() as u32,
-                attr_id.as_mut_ptr(),
-                attr_val.as_mut_ptr(),
+                attr_id.len() as NCTYPE_UINT32,
+                attr_id.as_mut_ptr() as NCTYPE_ATTRID_P,
+                attr_val.as_mut_ptr() as NCTYPE_UINT32_P,
             )
         };
         if ret != 0 {
@@ -123,7 +123,13 @@ impl NiCan {
     pub fn reset(&mut self, channel: String) -> Result<(), CanError> {
         match self.channels.get(&channel) {
             Some(ctx) => {
-                let ret = unsafe { (self.ncAction)(ctx.handle, NC_OP_RESET, 0) };
+                let ret = unsafe {
+                    (self.ncAction)(
+                        ctx.handle,
+                        NC_OP_RESET as NCTYPE_OPCODE,
+                        0
+                    )
+                };
 
                 self.check_status(channel.as_str(), ret)
                     .map_err(|r| {
@@ -132,7 +138,7 @@ impl NiCan {
                             Self::channel_info(&channel),
                             self.status_to_str(r)
                         );
-                        log::warn!(&info);
+                        log::warn!("{}", info);
 
                         CanError::OperationError(info)
                     })
@@ -155,7 +161,7 @@ impl NiCan {
                             Self::channel_info(&channel),
                             self.status_to_str(r)
                         );
-                        log::warn!(&info);
+                        log::warn!("{}", info);
 
                         CanError::OperationError(info)
                     })
@@ -173,8 +179,8 @@ impl NiCan {
                 let ret = unsafe {
                     (self.ncWrite)(
                         ctx.handle,
-                        std::mem::size_of::<NCTYPE_CAN_FRAME>() as u32,
-                        &raw_msg as *const NCTYPE_CAN_FRAME as *mut c_void,
+                        std::mem::size_of::<NCTYPE_CAN_FRAME>() as NCTYPE_UINT32,
+                        &raw_msg as *const NCTYPE_CAN_FRAME as NCTYPE_ANY_P,
                     )
                 };
 
@@ -197,8 +203,8 @@ impl NiCan {
             Some(ctx) => {
                 if let Err(ret) = self.wait_for_state(channel.as_str(), ctx.handle, timeout) {
                     let info = format!("{} wait for state timeout", Self::channel_info(&channel));
-                    if ret == constant::CanErrFunctionTimeout {
-                        log::warn!(&info);
+                    if ret == constant::CanErrFunctionTimeout as NCTYPE_STATUS {
+                        log::warn!("{}", info);
                     }
                     return Err(CanError::channel_timeout(Self::channel_info(&channel)));
                 }
@@ -217,8 +223,8 @@ impl NiCan {
                 let ret = unsafe {
                     (self.ncRead)(
                         ctx.handle,
-                        std::mem::size_of::<NCTYPE_CAN_STRUCT>() as u32,
-                        &raw_msg as *const NCTYPE_CAN_STRUCT as *mut c_void,
+                        std::mem::size_of::<NCTYPE_CAN_STRUCT>() as NCTYPE_UINT32,
+                        &raw_msg as *const NCTYPE_CAN_STRUCT as NCTYPE_ANY_P,
                     )
                 };
 
@@ -228,7 +234,7 @@ impl NiCan {
                         Self::channel_info(&channel),
                         self.status_to_str(r)
                     );
-                    log::warn!(&info);
+                    log::warn!("{}", info);
                     return Err(CanError::OperationError(info));
                 }
 
@@ -272,16 +278,23 @@ impl NiCan {
         }
     }
 
-    fn wait_for_state(&self, channel: &str, handle: NCTYPE_OBJH, timeout: Option<u32>) -> Result<(), i32> {
-        let timeout = timeout.unwrap_or(NC_DURATION_INFINITE);
+    fn wait_for_state(&self, channel: &str, handle: NCTYPE_OBJH, timeout: Option<u32>) -> Result<(), NCTYPE_STATUS> {
+        let timeout = timeout.unwrap_or(NC_DURATION_INFINITE) as NCTYPE_DURATION;
 
         let mut state = 0;
-        let ret = unsafe { (self.ncWaitForState)(handle, NC_ST_READ_AVAIL, timeout, &mut state) };
+        let ret = unsafe {
+            (self.ncWaitForState)(
+                handle,
+                NC_ST_READ_AVAIL as NCTYPE_STATE,
+                timeout,
+                &mut state
+            )
+        };
 
         self.check_status(channel, ret)
     }
 
-    fn check_status(&self, channel: &str, result: i32) -> Result<(), i32> {
+    fn check_status(&self, channel: &str, result: NCTYPE_STATUS) -> Result<(), NCTYPE_STATUS> {
         if result > 0 {
             log::warn!("{} {}", Self::channel_info(channel), self.status_to_str(result));
             Ok(())
@@ -292,9 +305,15 @@ impl NiCan {
         }
     }
 
-    fn status_to_str(&self, code: i32) -> String {
+    fn status_to_str(&self, code: NCTYPE_STATUS) -> String {
         let mut err = [0u8; 1024];
-        unsafe { (self.ncStatusToString)(code, err.len() as u32, err.as_mut_ptr() as *mut c_char) };
+        unsafe {
+            (self.ncStatusToString)(
+                code,
+                err.len() as NCTYPE_UINT32,
+                err.as_mut_ptr() as NCTYPE_STRING
+            )
+        };
         let cstr = unsafe { CStr::from_ptr(err.as_ptr() as *const c_char) };
 
         cstr.to_str().unwrap_or("Unknown").to_string()

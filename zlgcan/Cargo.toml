@@ -1,12 +1,16 @@
 [package]
 name = "zlgcan"
-version = "0.1.0-beta1"
-edition = "2021"
-license = "MIT OR GPL-3.0"
-authors = ["zhuyu <zhuyu4839@gmail.com>"]
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
 description = "A Cross-platform ZLGCAN driver."
 homepage = "https://github.com/zhuyu4839/rust-can"
 repository = "https://github.com/zhuyu4839/rust-can"
+
+[lib]
+crate-type = ["lib", "cdylib"]
+name = "zlgcan_rs"
 
 [dependencies]
 log = { workspace = true }

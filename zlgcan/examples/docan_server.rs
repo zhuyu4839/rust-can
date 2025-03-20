@@ -1,6 +1,6 @@
 // use docan::Server;
 // use rs_can::{CanFrame, CanId};
-// use zlgcan::can::CanMessage;
+// use zlgcan_rs::can::CanMessage;
 //
 // mod utils;
 //

@@ -1,6 +1,6 @@
 mod utils;
 
-use zlgcan::device::{DeriveInfo, ZCanDeviceType};
+use zlgcan_rs::device::{DeriveInfo, ZCanDeviceType};
 use self::utils::{can_device1, can_device2};
 
 #[test]

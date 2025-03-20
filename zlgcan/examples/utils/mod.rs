@@ -1,9 +1,7 @@
 pub mod algo;
 
 use crc::{Crc, CRC_32_BZIP2};
-use zlgcan::can::{CanChlCfgExt, CanChlCfgFactory, CanMessage, ZCanChlMode, ZCanChlType};
-use zlgcan::device::ZCanDeviceType;
-use zlgcan::driver::{ZCanDriver, ZDevice};
+use zlgcan_rs::{can::{CanChlCfgExt, CanChlCfgFactory, CanMessage, ZCanChlMode, ZCanChlType}, device::ZCanDeviceType, driver::{ZDevice, ZCanDriver}};
 // use docan::{Client, DoCanError, DoCanClient, DoCanServer};
 // use iso14229_1::{AddressAndLengthFormatIdentifier, RoutineCtrlType, TesterPresentType};
 use rs_can::{CanError};

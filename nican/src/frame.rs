@@ -94,7 +94,7 @@ impl CanFrame for CanMessage {
     }
 
     #[inline]
-    fn set_can_type(&mut self, _: bool) -> &mut Self {
+    fn set_can_type(&mut self, _: CanType) -> &mut Self {
         self
     }
 
