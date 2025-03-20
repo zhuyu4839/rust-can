@@ -1,6 +1,6 @@
 use std::ffi::{c_uchar, c_uint};
 use std::fmt::{Display, Formatter};
-use rs_can::{CanDirect, CanError, IdentifierFlags, DEFAULT_PADDING, EFF_MASK, MAX_FRAME_SIZE};
+use rs_can::{can_utils, CanDirect, CanError, CanType, IdentifierFlags, DEFAULT_PADDING, EFF_MASK, MAX_FRAME_SIZE};
 use crate::can::{CanMessage, constant::{CANFD_BRS, CANFD_ESI}};
 
 /// Then CAN frame type used in crate.
@@ -121,7 +121,7 @@ impl<const S: usize> Default for ZCanMsg20<S> {
 
 impl<const S: usize> Into<CanMessage> for ZCanMsg20<S> {
     fn into(self) -> CanMessage {
-        let is_fd = S > MAX_FRAME_SIZE;
+        let can_type = can_utils::can_type(S).unwrap();
 
         let can_id = self.can_id;
         let length = self.can_len as usize;
@@ -136,10 +136,18 @@ impl<const S: usize> Into<CanMessage> for ZCanMsg20<S> {
             channel: self.__res0,
             length,
             data,
-            is_fd,
+            can_type,
             direct: CanDirect::Receive,
-            bitrate_switch: if is_fd { self.flags & CANFD_BRS > 0 } else { false },
-            error_state_indicator: if is_fd { self.flags & CANFD_ESI > 0 } else { false },
+            bitrate_switch: match can_type {
+                CanType::Can => false,
+                CanType::CanFd => self.flags & CANFD_BRS > 0,
+                CanType::CanXl => todo!(),
+            },
+            error_state_indicator: match can_type {
+                CanType::Can => false,
+                CanType::CanFd => self.flags & CANFD_ESI > 0,
+                CanType::CanXl => todo!(),
+            },
             tx_mode: None,
         }
     }

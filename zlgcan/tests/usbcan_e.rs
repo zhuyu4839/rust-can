@@ -1,6 +1,6 @@
 mod utils;
 
-use zlgcan::device::ZCanDeviceType;
+use zlgcan_rs::device::ZCanDeviceType;
 use self::utils::can_device2;
 
 #[test]

@@ -1,5 +1,5 @@
 use rs_can::{CanDevice, CanError, CanFrame};
-use socan::{CanMessage, SocketCan};
+use socketcan_rs::{CanMessage, SocketCan};
 
 #[test]
 fn test_driver() -> anyhow::Result<(), CanError> {

@@ -1,5 +1,5 @@
 use std::ffi::{c_uchar, c_uint, c_ushort};
-use rs_can::{CanDirect, DEFAULT_PADDING, MAX_FD_FRAME_SIZE, MAX_FRAME_SIZE};
+use rs_can::{can_utils, CanDirect, CanType, DEFAULT_PADDING, MAX_FD_FRAME_SIZE, MAX_FRAME_SIZE};
 use crate::can::{CanMessage, constant::{TIME_FLAG_VALID, CANERR_FRAME_LENGTH}};
 
 /// only used usbcan on linux
@@ -41,7 +41,7 @@ impl Into<CanMessage> for ZCanFrameVCI {
             channel,
             length,
             data,
-            is_fd: false,
+            can_type: CanType::Can,
             direct: CanDirect::Receive,
             bitrate_switch: false,
             error_state_indicator: false,
@@ -117,15 +117,14 @@ impl<const S: usize> Into<CanMessage> for ZCanMsg20<S> {
         let length = self.can_len as usize;
         let mut data = self.data.to_vec();
         data.resize(length, Default::default());
-        let is_fd = (self.flags & (0x03 << 24)) >> 24;
-        let is_fd = match is_fd {
-            0x00 => false,
-            0x01 => true,
-            v => {
-                log::warn!("ZCanMsg20 - unexpected value: {} to set can-fd", v);
-                false
-            }
-        };
+        let can_type = can_utils::can_type(S).unwrap();
+        // let mut can_type = can_utils::can_type(S).unwrap();
+        // match (self.flags & (0x03 << 24)) >> 24 {
+        //     0x00 => can_type = CanType::Can,
+        //     0x01 => can_type = CanType::CanFd,
+        //     _ => {}
+        // }
+
         CanMessage {
             timestamp: self.timestamp as u64,
             arbitration_id: self.can_id,
@@ -135,10 +134,18 @@ impl<const S: usize> Into<CanMessage> for ZCanMsg20<S> {
             channel: self.channel,
             length,
             data,
-            is_fd,
+            can_type,
             direct: CanDirect::Receive,
-            bitrate_switch: (self.flags & (0x01 << 20)) > 0,
-            error_state_indicator: (self.flags & (0x01 << 19)) > 0,
+            bitrate_switch: match can_type {
+                CanType::Can => false,
+                CanType::CanFd => (self.flags & (0x01 << 20)) > 0,
+                CanType::CanXl => todo!(),
+            },
+            error_state_indicator: match can_type {
+                CanType::Can => false,
+                CanType::CanFd => (self.flags & (0x01 << 19)) > 0,
+                CanType::CanXl => todo!(),
+            },
             tx_mode: Some(((self.flags & (0x3 << 28)) >> 28) as u8),
         }
     }
@@ -147,7 +154,11 @@ impl<const S: usize> Into<CanMessage> for ZCanMsg20<S> {
 impl<const S: usize> From<CanMessage> for ZCanMsg20<S> {
     fn from(msg: CanMessage) -> Self {
         let flags = (msg.tx_mode() as u32 >> 28) |
-            if msg.is_fd { 0x01u32 >> 24 } else { 0 } |
+            match msg.can_type {
+                CanType::Can => 0,
+                CanType::CanFd => 0x01u32 >> 24,
+                CanType::CanXl => todo!(),
+            } |
             if msg.is_remote_frame { 0x01u32 >> 23 } else { 0 } |
             if msg.is_extended_id { 0x01u32 >> 22 } else { 0 } |
             if msg.is_error_frame { 0x01u32 >> 21 } else { 0 } |

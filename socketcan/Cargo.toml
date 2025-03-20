@@ -1,9 +1,9 @@
 [package]
 name = "socketcan-rs"
-version = "0.1.0"
-edition = "2021"
-license = "MIT OR GPL-3.0"
-authors = ["zhuyu <zhuyu4839@gmail.com>"]
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
 description = "SocketCAN driver with UDS protocol."
 homepage = "https://github.com/zhuyu4839/rust-can"
 repository = "https://github.com/zhuyu4839/rust-can"
@@ -12,6 +12,9 @@ keywords = [
     "SocketCAN",
     "UDS"
 ]
+
+[lib]
+crate-type = ["lib", "cdylib"]
 
 [dependencies]
 log = { workspace = true }

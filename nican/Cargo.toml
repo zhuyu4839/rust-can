@@ -1,17 +1,20 @@
 [package]
 name = "nican"
-version = "0.1.1-alpha1"
-edition = "2021"
-license = "MIT OR GPL-3.0"
-authors = ["zhuyu <zhuyu4839@gmail.com>"]
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
 description = "A Nican driver."
 homepage = "https://github.com/zhuyu4839/rust-can"
 repository = "https://github.com/zhuyu4839/rust-can"
 
+[lib]
+crate-type = ["lib", "cdylib"]
+name = "nican_rs"
+
 [dependencies]
 log = { workspace = true }
-thiserror = { workspace = true }
-winapi = { version = "0.3", features = ["errhandlingapi", "libloaderapi", "winnt", ] }
+winapi = { version = "0.3", features = ["errhandlingapi", "libloaderapi", "winnt", "minwindef"] }
 rs-can = { workspace = true }
 
 [dev-dependencies]
@@ -19,5 +22,5 @@ anyhow = { workspace = true }
 #docan = { workspace = true }
 #iso14229-1 = { workspace = true }
 
-[build-dependencies]
-bindgen = "0.71"
+#[build-dependencies]
+#bindgen = "0.71"

@@ -1,7 +1,7 @@
 // use docan::{Client as _, DoCanClient, DoCanServer, Server as _};
 // use iso14229_1::SessionType;
 // use rs_can::{CanFrame};
-// use socan::{CanMessage, SocketCan};
+// use socketcan_rs::{CanMessage, SocketCan};
 //
 // type Client = (IsoTpAdapter<SocketCan, String, CanMessage>, DoCanClient<SocketCan, String, CanMessage>);
 // type Server = (IsoTpAdapter<SocketCan, String, CanMessage>, DoCanServer<SocketCan, String, CanMessage>);

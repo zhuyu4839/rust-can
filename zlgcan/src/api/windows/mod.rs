@@ -258,7 +258,8 @@ impl ZCanApi for WinApi<'_> {
             // configure the clock
             if let Some(clock) = cfg.clock() {
                 let clock_path = CmdPath::new_path(CLOCK);
-                let value = CString::new(clock.to_string()).map_err(|e| CanError::OtherError(e.to_string()))?;
+                let value = CString::new(clock.to_string())
+                    .map_err(|e| CanError::OtherError(e.to_string()))?;
                 self.set_value(context, &clock_path, value.as_ptr() as *const c_void)?;
             }
             // set channel resistance status
@@ -274,10 +275,9 @@ impl ZCanApi for WinApi<'_> {
             let can_type = cfg.can_type()?;
             if !matches!(dev_type, ZCanDeviceType::ZCAN_USBCAN1 | ZCanDeviceType::ZCAN_USBCAN2) {
                 // set channel protocol
-                let protocol = can_type as u32;
                 let protocol_path = format!("{}/{}", channel, PROTOCOL);
                 let protocol_path = CmdPath::new_path(protocol_path.as_str());
-                let value = CString::new(protocol.to_string())
+                let value = CString::new((can_type as u32).to_string())
                     .map_err(|e| CanError::OtherError(e.to_string()))?;
                 self.set_value(context, &protocol_path, value.as_ptr() as *const c_void)?;
             }

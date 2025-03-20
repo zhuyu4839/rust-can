@@ -1,5 +1,5 @@
 use std::time::Duration;
-use nican::{CanMessage, NiCan};
+use nican_rs::{CanMessage, NiCan};
 use rs_can::{CanDevice, CanFrame, CanId};
 
 fn main() -> anyhow::Result<()> {

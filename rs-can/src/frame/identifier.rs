@@ -29,6 +29,16 @@ pub struct Filter {
     pub extended: bool
 }
 
+impl From<(u32, u32)> for Filter {
+    fn from(value: (u32, u32)) -> Self {
+        Self {
+            can_id: value.0,
+            can_mask: value.1,
+            extended: false,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Id {
     Standard(u16),

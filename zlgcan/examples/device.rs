@@ -1,8 +1,7 @@
 mod utils;
 
 use rs_can::{CanDevice, CanFrame, CanId};
-use zlgcan::can::CanMessage;
-use zlgcan::driver::ZDevice;
+use zlgcan_rs::{can::CanMessage, driver::ZDevice};
 use crate::utils::{init_device, CHANNEL};
 
 fn main() -> anyhow::Result<()> {

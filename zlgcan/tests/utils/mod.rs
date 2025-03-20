@@ -1,11 +1,12 @@
 use std::thread;
 use std::time::{Duration, SystemTime};
-use rand::{Rng, rng};
-use rand::prelude::ThreadRng;
+use rand::{Rng, rng, prelude::ThreadRng};
 use rs_can::{CanError, CanFrame, CanId, MAX_FD_FRAME_SIZE, MAX_FRAME_SIZE};
-use zlgcan::can::{CanChlCfgExt, CanChlCfgFactory, CanMessage, ZCanChlMode, ZCanChlType, ZCanFrameType, ZCanTxMode};
-use zlgcan::device::{DeriveInfo, ZCanDeviceType};
-use zlgcan::driver::{ZCanDriver, ZDevice};
+use zlgcan_rs::{
+    can::{CanChlCfgExt, CanChlCfgFactory, CanMessage, ZCanChlMode, ZCanChlType, ZCanFrameType, ZCanTxMode},
+    device::{DeriveInfo, ZCanDeviceType},
+    driver::{ZCanDriver, ZDevice},
+};
 
 fn generate_can_id(rng: &mut ThreadRng, extend: bool) -> u32 {
     if extend {

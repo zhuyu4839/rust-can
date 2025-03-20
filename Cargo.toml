@@ -1,12 +1,22 @@
 [workspace]
 members = [
     "rs-can",
-#    "nican",    # only on 32bit Windows
-#    "socketcan",# only on Linux
+    "nican",    # only on 32bit Windows
+    "socketcan",# only on Linux
+    "zlgcan",
+]
+default-members = [
+    "rs-can",
     "zlgcan",
 ]
 
 resolver = "2"
+
+[workspace.package]
+version = "0.2.0-alpha0"
+edition = "2021"
+license = "MIT OR GPL-3.0"
+authors = ["zhuyu <zhuyu4839@gmail.com>"]
 
 [workspace.dependencies]
 thiserror = "2"

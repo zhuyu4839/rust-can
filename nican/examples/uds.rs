@@ -1,6 +1,6 @@
 // use docan::{Client, DoCanClient};
 // use iso14229_1::SessionType;
-// use nican::{CanMessage, NiCan};
+// use nican_rs::{CanMessage, NiCan};
 // use rs_can::isotp::{Address, AddressType, IsoTpAdapter};
 //
 // const CHANNEL: &'static str = "CAN0";
