@@ -13,9 +13,9 @@ default-members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.2.0-aplha0"
+version = "0.2.0-alpha0"
 edition = "2021"
-license = "MIT or GPL-3.0"
+license = "MIT OR GPL-3.0"
 authors = ["zhuyu <zhuyu4839@gmail.com>"]
 
 [workspace.dependencies]
