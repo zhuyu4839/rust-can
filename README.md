@@ -1,3 +1,4 @@
+# This project has become part of [ecu-proto-rs](https://github.com/zhuyu4839/ecu-proto-rs)
 # A uniform driver for CAN device 
 
 ### Device supported
