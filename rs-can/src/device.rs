@@ -66,8 +66,8 @@ impl ChannelConfig {
         self
     }
 
-    pub fn add_other(&mut self, name: String, other: Box<dyn Any>) -> &mut Self {
-        self.others.insert(name, other);
+    pub fn add_other(&mut self, name: &str, other: Box<dyn Any>) -> &mut Self {
+        self.others.insert(name.into(), other);
         self
     }
 
@@ -98,7 +98,7 @@ impl DeviceBuilder {
         self
     }
 
-    pub fn add_config<S: Into<String>>(&mut self,channel: S, cfg: ChannelConfig) -> &mut Self {
+    pub fn add_config<S: Into<String>>(&mut self, channel: S, cfg: ChannelConfig) -> &mut Self {
         self.configs.insert(channel.into(), cfg);
         self
     }

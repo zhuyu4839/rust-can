@@ -321,7 +321,7 @@ impl NiCan {
     }
 }
 
-impl TryFrom<DeviceBuilder, Error=CanError> for NiCan {
+impl TryFrom<DeviceBuilder> for NiCan {
     type Error = CanError;
 
     fn try_from(builder: DeviceBuilder) -> Result<Self, Self::Error> {

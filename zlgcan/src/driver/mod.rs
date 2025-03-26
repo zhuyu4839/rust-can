@@ -73,7 +73,7 @@ impl TryFrom<DeviceBuilder> for ZCanDriver {
     type Error = CanError;
 
     fn try_from(builder: DeviceBuilder) -> Result<Self, Self::Error> {
-        if builder.interface() == interfaces::ZLGCAN {
+        if builder.interface() != interfaces::ZLGCAN {
             return Err(CanError::interface_not_matched(builder.interface()));
         }
 
@@ -84,6 +84,8 @@ impl TryFrom<DeviceBuilder> for ZCanDriver {
         let derive = builder.get_other::<DeriveInfo>(constants::DERIVE_INFO)?;
 
         let mut device = Self::new(dev_type, dev_idx, derive)?;
+        device.open()?;
+
         let factory = CanChlCfgFactory::new()?;
         builder.channel_configs()
             .iter()

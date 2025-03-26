@@ -369,7 +369,7 @@ impl SocketCan {
     }
 }
 
-impl TryFrom<DeviceBuilder, Error=CanError> for SocketCan {
+impl TryFrom<DeviceBuilder> for SocketCan {
     type Error = CanError;
 
     fn try_from(builder: DeviceBuilder) -> Result<Self, Self::Error> {
