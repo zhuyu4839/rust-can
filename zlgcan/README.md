@@ -46,8 +46,8 @@ zlgcan = { version="lastest-version" }
     ```
     and copy all files into correct directory.
 
-    The basic [library](https://github.com/zhuyu4839/zlgcan-driver-rs/tree/master/zlgcan-driver/library).
-    The [bitrate.cfg.yaml](https://github.com/zhuyu4839/zlgcan-driver-rs/blob/master/zlgcan-driver/bitrate.cfg.yaml)
+    The basic [library](https://github.com/zhuyu4839/rust-can/blob/master/zlgcan/library).
+    The [bitrate.cfg.yaml](https://github.com/zhuyu4839/rust-can/blob/master/zlgcan/library/bitrate.cfg.yaml)
 
 * Create `zcan.env` at your project path for special `ZCAN_LIBRARY` path, For example:
     ```shell

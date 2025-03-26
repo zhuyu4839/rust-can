@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::ffi::{c_char, CStr, CString};
 use winapi::{shared::minwindef::HMODULE, um::{errhandlingapi::GetLastError, libloaderapi::{LoadLibraryA, GetProcAddress}, winnt::LPCSTR}};
-use rs_can::{CanDevice, CanError, CanFilter, CanFrame, CanResult};
-use crate::{api::*, CanMessage, constant};
+use rs_can::{interfaces, CanDevice, CanError, CanFilter, CanFrame, CanResult, DeviceBuilder};
+use crate::{api::*, CanMessage, constant, FILTERS, LOG_ERROR};
 
 #[derive(Debug, Clone)]
 struct NiCanContext {
@@ -28,6 +28,7 @@ pub struct NiCan {
 }
 
 unsafe impl Send for NiCan {}
+unsafe impl Sync for NiCan {}
 
 impl NiCan {
     pub fn new(dll_path: Option<&str>) -> Result<Self, CanError> {
@@ -317,6 +318,31 @@ impl NiCan {
         let cstr = unsafe { CStr::from_ptr(err.as_ptr() as *const c_char) };
 
         cstr.to_str().unwrap_or("Unknown").to_string()
+    }
+}
+
+impl TryFrom<DeviceBuilder, Error=CanError> for NiCan {
+    type Error = CanError;
+
+    fn try_from(builder: DeviceBuilder) -> Result<Self, Self::Error> {
+        if builder.interface() != interfaces::NI_CAN {
+            return Err(CanError::interface_not_matched(builder.interface()));
+        }
+
+        let mut device = NiCan::new(None)?;
+        builder.channel_configs()
+            .iter()
+            .try_for_each(|(chl, cfg)| {
+                let filters = cfg.get_other::<Vec<CanFilter>>(FILTERS)?
+                    .unwrap_or_default();
+                let bitrate = cfg.bitrate();
+                let log_error = cfg.get_other::<bool>(LOG_ERROR)?
+                    .unwrap_or_default();
+
+                device.open(chl, filters, bitrate, log_error)
+            })?;
+
+        Ok(device)
     }
 }
 

@@ -24,6 +24,10 @@ pub enum Error {
 
 impl Error {
     #[inline(always)]
+    pub fn interface_not_matched(i: &str) -> Self {
+        Self::InitializeError(format!("interface {} is not matched", i))
+    }
+    #[inline(always)]
     pub fn device_open_error(msg: &str) -> Self {
         Self::OperationError(format!("{} when device opened", msg))
     }

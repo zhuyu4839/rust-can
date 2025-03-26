@@ -13,20 +13,21 @@ default-members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.2.0-alpha1"
+version = "0.2.0-alpha2"
 edition = "2021"
 license = "MIT OR GPL-3.0"
 authors = ["Jesse Smith <zhuyu4839@gmail.com>"]
 
 [workspace.dependencies]
-thiserror = "2"
-log = "0"
-dlopen2 = "0.7"
 bitflags = "2.6"
-serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9"
+derive-getters = "0.5"
+dlopen2 = "0.7"
 dotenvy = "0.15"
-hex = "0.4"
+#hex = "0.4"
+log = "0"
+serde = "1.0"
+serde_yaml = "0.9"
+thiserror = "2"
 
 rs-can = { path = "rs-can" }
 #iso15765-2 = "0.1.0-alpha1"
@@ -36,6 +37,6 @@ rs-can = { path = "rs-can" }
 anyhow = "1"
 rand = "0.9"
 #hex-literal = "1"
-bin_file = "0.1"
+#bin_file = "0.1"
 crc = "3.2"
 #docan = "0.1.0-alpha1"

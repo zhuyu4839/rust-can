@@ -181,69 +181,64 @@ impl ZDevice for ZCanDriver {
         self.derive.is_some()
     }
 
-    fn init_can_chl(&mut self, cfg: Vec<CanChlCfg>) -> Result<(), CanError> {
+    fn init_can_chl(&mut self, channel: u8, cfg: CanChlCfg) -> Result<(), CanError> {
         match &mut self.handler {
             Some(dev_hdl) => {
                 let dev_info = dev_hdl.device_info();
                 let channels = dev_info.can_channels();
+                if channel >= channels {
+                    return Err(CanError::OtherError(format!("CAN channel: {} out of length!", channel)));
+                }
 
                 if self.dev_type == ZCanDeviceType::ZCAN_USBCAN_4E_U {
                     return self.usbcan_4e_api.init_can_chl_ex(dev_hdl, channels, &cfg);
                 }
 
-                for (idx, cfg) in cfg.iter().enumerate() {
-                    let idx = idx as u8;
-                    if idx >= channels {
-                        log::warn!("ZLGCAN - the length of CAN channel configuration is out of channels!");
-                        break;
-                    }
-
-                    let mut context = ZChannelContext::new(dev_hdl.device_context().clone(), idx, None);
-                    match self.dev_type {
-                        ZCanDeviceType::ZCAN_USBCAN1
-                        | ZCanDeviceType::ZCAN_USBCAN2 => {
-                            if let Some(context) = dev_hdl.find_can(idx) {
-                                self.usbcan_api.reset_can_chl(context).unwrap_or_else(|e| log::warn!("{}", e));
-                                dev_hdl.remove_can(idx);
-                            }
-                            self.usbcan_api.init_can_chl(&mut context, cfg)?;
-                        },
-                        // ZCanDeviceType::ZCAN_USBCAN_4E_U => {
-                        //     if let Some(chl_hdl) = dev_hdl.find_can(idx) {
-                        //         self.usbcan_4e_api.reset_can_chl(chl_hdl).unwrap_or_else(|e| log::warn!("{}", e));
-                        //         dev_hdl.remove_can(idx);
-                        //     }
-                        //     chl_hdl = self.usbcan_4e_api.init_can_chl(dev_hdl.device_handler(), idx, cfg)?;
-                        // },
-                        ZCanDeviceType::ZCAN_USBCAN_8E_U => {
-                            if let Some(chl_hdl) = dev_hdl.find_can(idx) {
-                                self.usbcan_8e_api.reset_can_chl(chl_hdl).unwrap_or_else(|e| log::warn!("{}", e));
-                                dev_hdl.remove_can(idx);
-                            }
-                            self.usbcan_8e_api.init_can_chl(&mut context, cfg)?;
-                        },
-                        ZCanDeviceType::ZCAN_USBCANFD_MINI
-                        | ZCanDeviceType::ZCAN_USBCANFD_100U
-                        | ZCanDeviceType::ZCAN_USBCANFD_200U => {
-                            if let Some(context) = dev_hdl.find_can(idx) {
-                                self.usbcanfd_api.reset_can_chl(context)?;
-                                dev_hdl.remove_can(idx);
-                            }
-                            self.usbcanfd_api.init_can_chl(&mut context, cfg)?;
-                        },
-                        ZCanDeviceType::ZCAN_USBCANFD_800U => {
-                            if let Some(chl_hdl) = dev_hdl.find_can(idx) {
-                                self.usbcanfd_800u_api.reset_can_chl(chl_hdl).unwrap_or_else(|e| log::warn!("{}", e));
-                                dev_hdl.remove_can(idx);
-                            }
-                            self.usbcanfd_800u_api.init_can_chl_ex(self.dev_type, self.dev_idx, idx, cfg)?;
-                            self.usbcanfd_800u_api.init_can_chl(&mut context, cfg)?;
-                        },
-                        _ => return Err(CanError::NotSupportedError),
-                    }
-
-                    dev_hdl.add_can(idx, context);
+                let mut context = ZChannelContext::new(dev_hdl.device_context().clone(), channel);
+                match self.dev_type {
+                    ZCanDeviceType::ZCAN_USBCAN1
+                    | ZCanDeviceType::ZCAN_USBCAN2 => {
+                        if let Some(context) = dev_hdl.find_can(channel) {
+                            self.usbcan_api.reset_can_chl(context).unwrap_or_else(|e| log::warn!("{}", e));
+                            dev_hdl.remove_can(channel);
+                        }
+                        self.usbcan_api.init_can_chl(&mut context, &cfg)?;
+                    },
+                    // ZCanDeviceType::ZCAN_USBCAN_4E_U => {
+                    //     if let Some(chl_hdl) = dev_hdl.find_can(idx) {
+                    //         self.usbcan_4e_api.reset_can_chl(chl_hdl).unwrap_or_else(|e| log::warn!("{}", e));
+                    //         dev_hdl.remove_can(idx);
+                    //     }
+                    //     chl_hdl = self.usbcan_4e_api.init_can_chl(dev_hdl.device_handler(), idx, cfg)?;
+                    // },
+                    ZCanDeviceType::ZCAN_USBCAN_8E_U => {
+                        if let Some(chl_hdl) = dev_hdl.find_can(channel) {
+                            self.usbcan_8e_api.reset_can_chl(chl_hdl).unwrap_or_else(|e| log::warn!("{}", e));
+                            dev_hdl.remove_can(channel);
+                        }
+                        self.usbcan_8e_api.init_can_chl(&mut context, &cfg)?;
+                    },
+                    ZCanDeviceType::ZCAN_USBCANFD_MINI
+                    | ZCanDeviceType::ZCAN_USBCANFD_100U
+                    | ZCanDeviceType::ZCAN_USBCANFD_200U => {
+                        if let Some(context) = dev_hdl.find_can(channel) {
+                            self.usbcanfd_api.reset_can_chl(context)?;
+                            dev_hdl.remove_can(channel);
+                        }
+                        self.usbcanfd_api.init_can_chl(&mut context, &cfg)?;
+                    },
+                    ZCanDeviceType::ZCAN_USBCANFD_800U => {
+                        if let Some(chl_hdl) = dev_hdl.find_can(channel) {
+                            self.usbcanfd_800u_api.reset_can_chl(chl_hdl).unwrap_or_else(|e| log::warn!("{}", e));
+                            dev_hdl.remove_can(channel);
+                        }
+                        self.usbcanfd_800u_api.init_can_chl_ex(self.dev_type, self.dev_idx, channel, &cfg)?;
+                        self.usbcanfd_800u_api.init_can_chl(&mut context, &cfg)?;
+                    },
+                    _ => return Err(CanError::NotSupportedError),
                 }
+
+                dev_hdl.add_can(channel, context);
                 Ok(())
             },
             None => Err(CanError::device_not_opened()),
@@ -526,33 +521,29 @@ impl ZDevice for ZCanDriver {
         }
     }
 
-    fn init_lin_chl(&mut self, cfg: Vec<ZLinChlCfg>) -> Result<(), CanError> {
+    fn init_lin_chl(&mut self, channel: u8, cfg: ZLinChlCfg) -> Result<(), CanError> {
         lin_support(self.dev_type)?;
         match &mut self.handler {
             Some(dev_hdl) => {
                 let channels = 2;   //dev_info.lin_channels();  // TODO
-                for (idx, cfg) in cfg.iter().enumerate() {
-                    let idx = idx as u8;
-                    if idx >= channels {
-                        log::warn!("ZLGCAN - the length of LIN channel configuration is out of channels!");
-                        break;
-                    }
-
-                    let mut context = ZChannelContext::new(dev_hdl.device_context().clone(), idx, None);
-                    match self.dev_type {
-                        ZCanDeviceType::ZCAN_USBCANFD_200U => {
-                            if let Some(context) = dev_hdl.find_lin(idx) {
-                                self.usbcanfd_api.reset_lin_chl(context)?;
-                                dev_hdl.remove_lin(idx);
-                            }
-
-                            self.usbcanfd_api.init_lin_chl(&mut context, cfg)?;
-                        },
-                        _ => return Err(CanError::NotSupportedError),
-                    }
-
-                    dev_hdl.add_lin(idx, context);
+                if channel >= channels {
+                    return Err(CanError::OtherError(format!("LIN channel: {} is out of channels!", channel)));
                 }
+
+                let mut context = ZChannelContext::new(dev_hdl.device_context().clone(), channel);
+                match self.dev_type {
+                    ZCanDeviceType::ZCAN_USBCANFD_200U => {
+                        if let Some(context) = dev_hdl.find_lin(channel) {
+                            self.usbcanfd_api.reset_lin_chl(context)?;
+                            dev_hdl.remove_lin(channel);
+                        }
+
+                        self.usbcanfd_api.init_lin_chl(&mut context, &cfg)?;
+                    },
+                    _ => return Err(CanError::NotSupportedError),
+                }
+
+                dev_hdl.add_lin(channel, context);
 
                 Ok(())
             },

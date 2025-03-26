@@ -3,8 +3,9 @@ use std::ffi::{c_uchar, c_uint, c_ushort};
 use std::fs::read_to_string;
 use std::sync::{Arc, Weak};
 use serde::Deserialize;
-use rs_can::CanError;
+use rs_can::{CanError, ChannelConfig};
 use crate::can::{ZCanFilterType, constant::{BITRATE_CFG_FILENAME, TIMING0, TIMING1, ZCAN_ENV, ZCAN_VAR}};
+use crate::constants;
 use crate::device::ZCanDeviceType;
 
 #[repr(C)]
@@ -213,6 +214,26 @@ impl CanChlCfgFactory {
                 format!("device: {:?} is not configured in file!", dev_type)
             ))
         }
+    }
+
+    pub fn from_channel_cfg(&self, dev_type: u32, cfg: &ChannelConfig) -> Result<CanChlCfg, CanError> {
+        let can_type = cfg.get_other::<u8>(constants::CHANNEL_TYPE)?
+            .unwrap_or(ZCanChlType::default() as u8);
+        let mode = cfg.get_other::<u8>(constants::CHANNEL_MODE)?
+            .unwrap_or(ZCanChlMode::default() as u8);
+        let bitrate = cfg.bitrate();
+
+        let filter = cfg.get_other::<u8>(constants::FILTER)?;
+        let dbitrate = cfg.dbitrate();
+        let resistance = cfg.resistance();
+        let acc_code = cfg.get_other::<u32>(constants::ACC_CODE)?;
+        let acc_mask = cfg.get_other::<u32>(constants::ACC_MASK)?;
+        let brp = cfg.get_other::<u32>(constants::BRP)?;
+
+        self.new_can_chl_cfg(
+            dev_type, can_type, mode, bitrate,
+            CanChlCfgExt::new(filter, dbitrate, resistance, acc_code, acc_mask, brp),
+        )
     }
 }
 

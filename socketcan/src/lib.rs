@@ -1,11 +1,13 @@
-mod socket;
-pub use socket::*;
+mod constants;
+pub use constants::*;
 mod frame;
 pub use frame::*;
+mod socket;
+pub use socket::*;
 
 use std::{collections::HashMap, io, sync::Arc, os::{fd::{AsRawFd, BorrowedFd, FromRawFd, OwnedFd}, raw::{c_int, c_void}}, time::{Instant, Duration}};
 use libc::{can_filter, can_frame, canfd_frame, canxl_frame, fcntl, read, CAN_RAW_ERR_FILTER, CAN_RAW_FILTER, CAN_RAW_JOIN_FILTERS, CAN_RAW_LOOPBACK, CAN_RAW_RECV_OWN_MSGS, EINPROGRESS, F_GETFL, F_SETFL, O_NONBLOCK, SOL_CAN_RAW, SOL_SOCKET, SO_RCVTIMEO, SO_SNDTIMEO};
-use rs_can::{CanDevice, CanError, CanFilter, CanDirect, CanFrame, CanResult, ERR_MASK};
+use rs_can::{CanDevice, CanError, CanFilter, CanDirect, CanFrame, CanResult, ERR_MASK, DeviceBuilder, interfaces};
 
 pub(crate) const FRAME_SIZE: usize = std::mem::size_of::<can_frame>();
 pub(crate) const FD_FRAME_SIZE: usize = std::mem::size_of::<canfd_frame>();
@@ -364,6 +366,41 @@ impl SocketCan {
             }
             None => Err(CanError::OperationError(format!("channel {} not opened", channel))),
         }
+    }
+}
+
+impl TryFrom<DeviceBuilder, Error=CanError> for SocketCan {
+    type Error = CanError;
+
+    fn try_from(builder: DeviceBuilder) -> Result<Self, Self::Error> {
+        if builder.interface() != interfaces::SOCKETCAN {
+            return Err(CanError::interface_not_matched(builder.interface()));
+        }
+
+        let mut device = SocketCan::new();
+        builder.channel_configs()
+            .iter()
+            .try_for_each(|(clh, cfg)| {
+                let canfd = builder.get_other::<bool>(CANFD)?
+                    .unwrap_or_default();
+                device.init_channel(clh, canfd)?;
+
+                if let Some(filters) = builder.get_other::<Vec<CanFilter>>(FILTERS)? {
+                    device.set_filters(clh, &filters)?;
+                }
+
+                if let Some(loopback) = builder.get_other::<bool>(LOOPBACK)? {
+                    device.set_loopback(clh, loopback)?;
+                }
+
+                if let Some(recv_own_msg) = builder.get_other::<bool>(RECV_OWN_MSG) {
+                    device.set_recv_own_msgs(clh, recv_own_msg)?;
+                }
+
+                Ok(())
+            })?;
+
+        Ok(device)
     }
 }
 

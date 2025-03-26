@@ -171,8 +171,8 @@ pub struct ZChannelContext {
 
 impl ZChannelContext {
     #[inline]
-    pub fn new(device: ZDeviceContext, channel: u8, chl_hdl: Option<u32>) -> Self {
-        Self { device, channel, chl_hdl, timestamp: Default::default() }
+    pub fn new(device: ZDeviceContext, channel: u8) -> Self {
+        Self { device, channel, chl_hdl: Default::default(), timestamp: Default::default() }
     }
     #[inline]
     pub fn device_context(&self) -> &ZDeviceContext {

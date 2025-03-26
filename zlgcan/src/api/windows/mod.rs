@@ -9,7 +9,7 @@ use crate::lin::{ZLinChlCfg, ZLinFrame, ZLinPublish, ZLinPublishEx, ZLinSubscrib
 use crate::utils::c_str_to_string;
 
 use crate::api::{ZCanApi, ZCloudApi, ZDeviceApi, ZLinApi};
-use crate::constant::{STATUS_OFFLINE, STATUS_ONLINE, INTERNAL_RESISTANCE, PROTOCOL, CANFD_ABIT_BAUD_RATE, CANFD_DBIT_BAUD_RATE, BAUD_RATE, CLOCK};
+use crate::constants::{STATUS_OFFLINE, STATUS_ONLINE, INTERNAL_RESISTANCE, PROTOCOL, CANFD_ABIT_BAUD_RATE, CANFD_DBIT_BAUD_RATE, BAUD_RATE, CLOCK};
 
 #[allow(non_snake_case)]
 #[derive(Debug, Clone, SymBorApi)]
@@ -619,7 +619,7 @@ impl ZCloudApi for WinApi<'_> {
 #[cfg(test)]
 mod tests {
     use dlopen2::symbor::{Library, SymBorApi};
-    // use crate::device::ZCanDeviceType;
+    use crate::constants::LOAD_LIB_FAILED;
     use super::WinApi;
 
     #[test]
@@ -627,7 +627,7 @@ mod tests {
         // let dev_type = ZCanDeviceType::ZCAN_USBCAN1;
 
         let dll_path = "library/windows/x86_64/zlgcan.dll";
-        let lib = Library::open(dll_path).expect("ZLGCAN - could not open library");
+        let lib = Library::open(dll_path).expect(LOAD_LIB_FAILED);
 
         let _ = unsafe { WinApi::load(&lib) }.expect("ZLGCAN - could not load symbols!");
     }

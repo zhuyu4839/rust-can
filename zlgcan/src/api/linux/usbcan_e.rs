@@ -4,7 +4,7 @@ use rs_can::CanError;
 
 use crate::can::{CanChlCfg, ZCanChlError, ZCanChlStatus, ZCanFrameType, ZCanFrame, ZCanChlCfg, ZCanFrameInner, CanMessage};
 use crate::device::{Handler, IProperty, SetValueFunc, ZCanDeviceType, ZChannelContext, ZDeviceContext, ZDeviceInfo};
-use crate::constant::{channel_bitrate, channel_work_mode};
+use crate::constants::{channel_bitrate, channel_work_mode};
 use crate::api::{ZCanApi, ZCloudApi, ZDeviceApi, ZLinApi};
 
 #[allow(non_snake_case)]
@@ -52,34 +52,27 @@ impl USBCANEApi<'_> {
     pub(crate) fn init_can_chl_ex(
         &self,
         dev_hdl: &mut Handler,
-        channels: u8,
-        cfg: &Vec<CanChlCfg>,
+        channel: u8,
+        cfg: &CanChlCfg,
     ) -> Result<(), CanError> {
         let p = self.self_get_property(dev_hdl.device_context())?;
         let set_value_func = p.SetValue;
         let mut error = None;
-        for (idx, cfg) in cfg.iter().enumerate() {
-            let idx = idx as u8;
-            if idx >= channels {
-                log::warn!("ZLGCAN - the length of CAN channel configuration is out of channels!");
-                break;
-            }
 
-            if let Some(chl_hdl) = dev_hdl.find_can(idx) {
-                self.reset_can_chl(chl_hdl).unwrap_or_else(|e| log::warn!("{}", e));
-                dev_hdl.remove_can(idx);
-            }
+        if let Some(chl_hdl) = dev_hdl.find_can(channel) {
+            self.reset_can_chl(chl_hdl).unwrap_or_else(|e| log::warn!("{}", e));
+            dev_hdl.remove_can(channel);
+        }
 
-            match self.start_channel(dev_hdl, idx, set_value_func, cfg) {
-                Ok(context) => {
-                    dev_hdl.add_can(idx, context);
-                },
-                Err(e) => {
-                    error = Some(e);
-                    break;
-                }
+        match self.start_channel(dev_hdl, channel, set_value_func, cfg) {
+            Ok(context) => {
+                dev_hdl.add_can(channel, context);
+            },
+            Err(e) => {
+                error = Some(e);
             }
         }
+
         self.release_property(&p)?;
 
         match error {
@@ -95,7 +88,7 @@ impl USBCANEApi<'_> {
         set_value_func: SetValueFunc,
         cfg: &CanChlCfg
     ) -> Result<ZChannelContext, CanError> {
-        let mut context = ZChannelContext::new(dev_hdl.device_context().clone(), channel, None);
+        let mut context = ZChannelContext::new(dev_hdl.device_context().clone(), channel);
         self.init_can_chl(&mut context, cfg)?; // ZCAN_InitCAN]
         // self.usbcan_4e_api.reset_can_chl(chl_hdl).unwrap_or_else(|e| log::warn!("{}", e));
         let (chl_hdl, channel) = (context.channel_handler()?, context.channel());
@@ -303,7 +296,7 @@ impl ZCloudApi for USBCANEApi<'_> {}
 mod tests {
     use std::ffi::CString;
     use dlopen2::symbor::{Library, SymBorApi};
-    // use crate::can::{CanChlCfgFactory, ZCanChlMode, ZCanChlType};
+    use crate::constants::LOAD_LIB_FAILED;
     use crate::device::{ZCanDeviceType, ZDeviceInfo};
     // use crate::api::ZDeviceApi;
     use super::USBCANEApi;
@@ -314,7 +307,7 @@ mod tests {
         let dev_idx = 0;
         let so_path = "library/linux/x86_64/libusbcan-4e.so";
 
-        let lib = Library::open(so_path).expect("ZLGCAN - could not open library");
+        let lib = Library::open(so_path).expect(LOAD_LIB_FAILED);
         let mut handlers = Vec::new();
 
         unsafe {

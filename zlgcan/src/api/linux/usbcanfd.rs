@@ -395,6 +395,7 @@ mod tests {
     use dlopen2::symbor::{Library, SymBorApi};
     use rs_can::{CanError, CanFrame, CanId};
     use crate::can::{ZCanChlMode, ZCanChlType, ZCanFrame, CanMessage, ZCanFrameInner};
+    use crate::constants::LOAD_LIB_FAILED;
     use crate::device::{ZCanDeviceType, ZChannelContext, ZDeviceContext};
     use crate::can::CanChlCfgFactory;
     use crate::api::{ZCanApi, ZDeviceApi};
@@ -408,7 +409,7 @@ mod tests {
         let channels = 2;
 
         let so_path = "library/linux/x86_64/libusbcanfd.so";
-        let lib = Library::open(so_path).expect("ZLGCAN - could not open library");
+        let lib = Library::open(so_path).expect(LOAD_LIB_FAILED);
 
         let api = unsafe { USBCANFDApi::load(&lib) }.expect("ZLGCAN - could not load symbols!");
         let factory = CanChlCfgFactory::new()?;
@@ -428,7 +429,7 @@ mod tests {
         assert_eq!(dev_info.can_channels(), channels);
         assert!(dev_info.canfd());
 
-        let mut context = ZChannelContext::new(context, channel, None);
+        let mut context = ZChannelContext::new(context, channel);
         api.init_can_chl(&mut context, &cfg)?;
         let frame = CanMessage::new(
             CanId::from_bits(0x7E0, Some(false)),

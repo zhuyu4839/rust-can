@@ -1,4 +1,4 @@
-//! from [socketcan](https://crates.io/crates/socketcan)
+//! from [socketcan](https://crates.io/crates/socketcan-rs)
 
 use std::{ffi::CString, fmt, io, mem, os::raw::{c_int, c_void}, time::Duration, ptr};
 use libc::*;

@@ -23,7 +23,7 @@ pub struct ZCanDriver {
 }
 
 impl ZDevice for ZCanDriver {
-    fn new(dev_type: u32, dev_idx: u32, derive: Option<DeriveInfo>) -> Result<Self, CanError> where Self: Sized {
+    fn new(dev_type: u32, dev_idx: u32, derive: Option<DeriveInfo>) -> Result<Self, CanError> {
         let libpath = match dotenvy::from_filename(ZCAN_ENV) {
             Ok(_) => match std::env::var(ZCAN_VAR) {
                 Ok(v) => format!("{}/{}", v, LIB_PATH),
@@ -95,28 +95,25 @@ impl ZDevice for ZCanDriver {
         })
     }
 
-    fn init_can_chl(&mut self, cfg: Vec<CanChlCfg>) -> Result<(), CanError> {
+    fn init_can_chl(&mut self, channel: u8, cfg: CanChlCfg) -> Result<(), CanError> {
         match &mut self.handler {
             Some(dev_hdl) => {
                 let dev_info = dev_hdl.device_info();
                 let channels = dev_info.can_channels();
-                for (idx, cfg) in cfg.iter().enumerate() {
-                    let idx = idx as u8;
-                    if idx >= channels {
-                        log::warn!("ZLGCAN - the length of CAN channel configuration is out of channels!");
-                        break;
-                    }
-
-                    if let Some(v) = dev_hdl.find_can(idx) {
-                        self.api.reset_can_chl(&v).unwrap_or_else(|e| log::warn!("{}", e));
-                        dev_hdl.remove_can(idx);
-                    }
-
-                    let mut context =  ZChannelContext::new(dev_hdl.device_context().clone(), idx, None);
-                    self.api.init_can_chl(&mut context, cfg)?;
-
-                    dev_hdl.add_can(idx, context);
+                if channel >= channels {
+                    return Err(CanError::OtherError(format!("CAN channel: {} is out of channels!", channel)));
                 }
+
+                if let Some(v) = dev_hdl.find_can(channel) {
+                    self.api.reset_can_chl(&v).unwrap_or_else(|e| log::warn!("{}", e));
+                    dev_hdl.remove_can(channel);
+                }
+
+                let mut context =  ZChannelContext::new(dev_hdl.device_context().clone(), channel);
+                self.api.init_can_chl(&mut context, &cfg)?;
+
+                dev_hdl.add_can(channel, context);
+
                 Ok(())
             },
             None => Err(CanError::device_not_opened()),
@@ -189,27 +186,23 @@ impl ZDevice for ZCanDriver {
         })
     }
 
-    fn init_lin_chl(&mut self, cfg: Vec<ZLinChlCfg>) -> Result<(), CanError> {
+    fn init_lin_chl(&mut self, channel: u8, cfg: ZLinChlCfg) -> Result<(), CanError> {
         super::lin_support(self.dev_type)?;
         match &mut self.handler {
             Some(dev_hdl) => {
                 let channels = 2;   //dev_info.lin_channels();  // TODO
-                for (idx, cfg) in cfg.iter().enumerate() {
-                    let idx = idx as u8;
-                    if idx >= channels {
-                        log::warn!("ZLGCAN - the length of LIN channel configuration is out of channels!");
-                        break;
-                    }
-
-                    if let Some(v) = dev_hdl.find_lin(idx) {
-                        self.api.reset_lin_chl(&v).unwrap_or_else(|e| log::warn!("{}", e));
-                        dev_hdl.remove_lin(idx);
-                    }
-
-                    let mut context = ZChannelContext::new(dev_hdl.device_context().clone(), idx, None);
-                    self.api.init_lin_chl(&mut context, cfg)?;
-                    dev_hdl.add_lin(idx, context);
+                if channel >= channels {
+                    return Err(CanError::OtherError(format!("LIN channel: {} is out of channels!", channel)));
                 }
+
+                if let Some(v) = dev_hdl.find_lin(channel) {
+                    self.api.reset_lin_chl(&v).unwrap_or_else(|e| log::warn!("{}", e));
+                    dev_hdl.remove_lin(channel);
+                }
+
+                let mut context = ZChannelContext::new(dev_hdl.device_context().clone(), channel);
+                self.api.init_lin_chl(&mut context, &cfg)?;
+                dev_hdl.add_lin(channel, context);
 
                 Ok(())
             },

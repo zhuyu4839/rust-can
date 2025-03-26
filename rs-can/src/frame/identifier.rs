@@ -46,6 +46,7 @@ pub enum Id {
 }
 
 unsafe impl Send for Id {}
+unsafe impl Sync for Id {}
 
 impl Into<u32> for Id {
     fn into(self) -> u32 {

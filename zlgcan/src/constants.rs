@@ -1,5 +1,15 @@
 #![allow(dead_code)]
 
+pub const DEVICE_TYPE: &'static str = "device-type";
+pub const DEVICE_INDEX: &'static str = "device-index";
+pub const DERIVE_INFO: &'static str = "derive-info";
+pub const CHANNEL_TYPE: &'static str = "chl-type";
+pub const CHANNEL_MODE: &'static str = "chl-mode";
+pub const FILTER: &'static str = "filter";
+pub const ACC_CODE: &'static str = "acc-code";
+pub const ACC_MASK: &'static str = "acc-mask";
+pub const BRP: &'static str = "brp";
+
 pub(crate) const LOAD_LIB_FAILED: &str = "ZLGCAN - could not open library!";
 pub(crate) const STATUS_ONLINE: u32 = 2;
 pub(crate) const STATUS_OFFLINE: u32 = 3;
