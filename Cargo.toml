@@ -23,20 +23,13 @@ bitflags = "2.6"
 derive-getters = "0.5"
 dlopen2 = "0.7"
 dotenvy = "0.15"
-#hex = "0.4"
 log = "0"
 serde = "1.0"
 serde_yaml = "0.9"
 thiserror = "2"
 
 rs-can = { path = "rs-can" }
-#iso15765-2 = "0.1.0-alpha1"
-#iso14229-1 = "0.1.0-alpha1"
 
 # dev-dependencies
 anyhow = "1"
 rand = "0.9"
-#hex-literal = "1"
-#bin_file = "0.1"
-crc = "3.2"
-#docan = "0.1.0-alpha1"

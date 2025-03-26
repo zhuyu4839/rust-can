@@ -24,8 +24,3 @@ rs-can = { workspace = true }
 [dev-dependencies]
 anyhow = { workspace = true }
 rand = { workspace = true }
-#hex = { workspace = true }
-#bin_file = { workspace = true }
-crc = { workspace = true }
-#iso14229-1 = { workspace = true }
-#docan = { workspace = true }

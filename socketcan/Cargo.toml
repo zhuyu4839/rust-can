@@ -24,5 +24,3 @@ rs-can = { workspace = true }
 
 [dev-dependencies]
 anyhow = { workspace = true }
-#iso14229-1 = { workspace = true }
-#docan = { workspace = true }
