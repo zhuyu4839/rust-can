@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::ffi::{c_uchar, c_uint, c_ushort};
 use rs_can::CanError;
-use crate::can::{common::BitrateCfg, CanChlCfgExt, ZCanChlMode, ZCanChlType, constant::{BRP, SJW, SMP, TSEG1, TSEG2}};
+use crate::can::{common::BitrateCfg, ZCanChlMode, ZCanChlType, constant::{BRP, SJW, SMP, TSEG1, TSEG2}};
 
 /// Linux USBCANFD
 #[repr(C)]
@@ -107,12 +107,12 @@ pub(crate) fn get_fd_cfg(
     can_type: u8,
     mode: u8,
     bitrate: u32,
+    dbitrate: Option<u32>,
     cfg_ctx: &BitrateCfg,
-    extra: &CanChlCfgExt,
 ) -> Result<self::ZCanFdChlCfgInner, CanError> {
-    let (aset, dset) = get_fd_set(bitrate, cfg_ctx, extra.dbitrate)?;
+    let (aset, dset) = get_fd_set(bitrate, dbitrate, cfg_ctx)?;
     let clock = cfg_ctx.clock
-        .ok_or(CanError::OtherError("`clock` is not configured in file!".to_string()))?;
+        .ok_or(CanError::other_error("`clock` is not configured in file!"))?;
     let can_type = ZCanChlType::try_from(can_type)?;
 
     Ok(self::ZCanFdChlCfgInner::new(
@@ -126,8 +126,8 @@ pub(crate) fn get_fd_cfg(
 
 fn get_fd_set(
     bitrate: u32,
+    dbitrate: Option<u32>,
     cfg: &BitrateCfg,
-    dbitrate: Option<u32>
 ) -> Result<(ZCanFdChlCfgSet, ZCanFdChlCfgSet), CanError> {
     let bitrate_ctx = &cfg.bitrate;
     let dbitrate_ctx = &cfg.data_bitrate;

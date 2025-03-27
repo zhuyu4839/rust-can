@@ -23,7 +23,7 @@ impl TryFrom<u8> for ZCanFdStd {
         match value {
             0 => Ok(ZCanFdStd::CANFD_ISO),
             1 => Ok(ZCanFdStd::CANFD_NON_ISO),
-            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
+            _ => Err(CanError::other_error("parameter not supported")),
         }
     }
 }
@@ -41,7 +41,7 @@ impl TryFrom<u8> for ZCanFilterType {
         match value {
             0 => Ok(ZCanFilterType::Double),
             1 => Ok(ZCanFilterType::Single),
-            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
+            _ => Err(CanError::other_error("parameter not supported")),
         }
     }
 }

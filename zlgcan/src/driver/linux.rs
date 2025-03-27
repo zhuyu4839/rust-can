@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use dlopen2::symbor::Container;
-use rs_can::CanError;
+use rs_can::{CanError, ChannelConfig};
 
-use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType, constant::{ZCAN_VAR, ZCAN_ENV, ZCAN_PATH_DEFAULT}};
+use crate::can::{CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType, constant::{ZCAN_VAR, ZCAN_ENV, ZCAN_PATH_DEFAULT}};
 use crate::device::{DeriveInfo, Handler, ZCanDeviceType, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::lin::{ZLinChlCfg, ZLinFrame, ZLinPublish, ZLinSubscribe};
 use crate::api::{USBCANApi, USBCANEApi, USBCANFDApi, USBCANFD800UApi, ZCanApi, ZDeviceApi, ZLinApi};
@@ -181,7 +181,7 @@ impl ZDevice for ZCanDriver {
         self.derive.is_some()
     }
 
-    fn init_can_chl(&mut self, channel: u8, cfg: CanChlCfg) -> Result<(), CanError> {
+    fn init_can_chl(&mut self, channel: u8, cfg: &ChannelConfig) -> Result<(), CanError> {
         match &mut self.handler {
             Some(dev_hdl) => {
                 let dev_info = dev_hdl.device_info();

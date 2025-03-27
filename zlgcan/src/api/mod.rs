@@ -10,8 +10,8 @@ mod windows;
 pub(crate) use windows::*;
 
 use std::ffi::{c_char, c_void};
-use rs_can::CanError;
-use crate::can::{CanChlCfg, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType};
+use rs_can::{CanError, ChannelConfig};
+use crate::can::{CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType};
 use crate::cloud::{ZCloudGpsFrame, ZCloudServerInfo, ZCloudUserData};
 use crate::device::{CmdPath, IProperty, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::lin::{ZLinChlCfg, ZLinFrame, ZLinPublish, ZLinPublishEx, ZLinSubscribe};
@@ -55,7 +55,7 @@ pub trait ZDeviceApi {
 
 #[allow(unused_variables)]
 pub trait ZCanApi {
-    fn init_can_chl(&self, context: &mut ZChannelContext, cfg: &CanChlCfg) -> Result<(), CanError>;
+    fn init_can_chl(&self, context: &mut ZChannelContext, cfg: &ChannelConfig) -> Result<(), CanError>;
     fn reset_can_chl(&self, context: &ZChannelContext) -> Result<(), CanError>;
     fn read_can_chl_status(&self, context: &ZChannelContext) -> Result<ZCanChlStatus, CanError>;
     fn read_can_chl_error(&self, context: &ZChannelContext) -> Result<ZCanChlError, CanError>;

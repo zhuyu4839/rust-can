@@ -1,5 +1,5 @@
-use rs_can::{interfaces, CanDevice, CanError, CanFrame, CanResult, CanType, DeviceBuilder};
-use crate::can::{CanChlCfg, CanChlCfgFactory, CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType};
+use rs_can::{interfaces, CanDevice, CanError, CanFrame, CanResult, CanType, ChannelConfig, DeviceBuilder};
+use crate::can::{CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType};
 use crate::cloud::{ZCloudGpsFrame, ZCloudServerInfo, ZCloudUserData};
 use crate::constants;
 use crate::device::{DeriveInfo, Handler, ZCanDeviceType, ZChannelContext, ZDeviceInfo};
@@ -86,13 +86,12 @@ impl TryFrom<DeviceBuilder> for ZCanDriver {
         let mut device = Self::new(dev_type, dev_idx, derive)?;
         device.open()?;
 
-        let factory = CanChlCfgFactory::new()?;
         builder.channel_configs()
             .iter()
             .try_for_each(|(chl, cfg)| {
                 let chl = chl.parse::<u8>()
                     .map_err(|_| CanError::other_error("`chl` not a number"))?;
-                device.init_can_chl(chl, factory.from_channel_cfg(dev_type, cfg)?)
+                device.init_can_chl(chl, cfg)
             })?;
 
         Ok(device)
@@ -112,7 +111,7 @@ pub trait ZDevice {
     fn is_online(&self) -> Result<bool, CanError> {
         Err(CanError::NotSupportedError)
     }
-    fn init_can_chl(&mut self, channel: u8, cfg: CanChlCfg) -> Result<(), CanError>;
+    fn init_can_chl(&mut self, channel: u8, cfg: &ChannelConfig) -> Result<(), CanError>;
     fn reset_can_chl(&mut self, channel: u8) -> Result<(), CanError>;
     // fn resistance_state(&self, dev_idx: u32, channel: u8) -> Result<(), CanError>;
     fn read_can_chl_status(&self, channel: u8) -> Result<ZCanChlStatus, CanError>;

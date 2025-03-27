@@ -4,7 +4,7 @@ use rs_can::CanError;
 #[inline]
 pub fn c_str_to_string(src: *const c_char) -> Result<String, CanError> {
     if src.is_null() {
-        Err(CanError::OtherError("null pointer".to_string()))
+        Err(CanError::other_error("null pointer error"))
     } else {
         let c_str = unsafe { CStr::from_ptr(src) };
         let s_slice = c_str.to_str()

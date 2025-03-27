@@ -157,12 +157,12 @@ impl ZLinPublishEx {
                     ID: pid,
                     dataLen: len as u8,
                     data: data.try_into()
-                        .map_err(|_| CanError::OtherError("invalid data length".to_owned()))?,
+                        .map_err(|_| CanError::other_error("invalid data length"))?,
                     chkSumMode: cs_mode as c_uchar,
                     reserved: Default::default(),
                 })
             },
-            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
+            _ => Err(CanError::other_error("parameter not supported")),
         }
     }
 }

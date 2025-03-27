@@ -20,7 +20,7 @@ impl TryFrom<u8> for ZCanFrameType {
             0 => Ok(ZCanFrameType::CAN),
             1 => Ok(ZCanFrameType::CANFD),
             2 => Ok(ZCanFrameType::ALL),
-            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
+            _ => Err(CanError::other_error("parameter not supported")),
         }
     }
 }
@@ -52,7 +52,7 @@ impl TryFrom<u8> for ZCanTxMode {
             1 => Ok(ZCanTxMode::Once),
             2 => Ok(ZCanTxMode::SelfReception),
             3 => Ok(ZCanTxMode::SelfReceptionOnce),
-            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
+            _ => Err(CanError::other_error("parameter not supported")),
         }
     }
 }

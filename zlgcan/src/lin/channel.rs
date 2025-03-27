@@ -38,10 +38,10 @@ impl ZLinChlCfg {
                                     linBaud: bitrate
                                 })
                             },
-                            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
+                            _ => Err(CanError::other_error("parameter not supported")),
                         }
                     },
-                    _ => Err(CanError::OtherError("parameter not supported".to_owned())),
+                    _ => Err(CanError::other_error("parameter not supported")),
                 }
             },
             None => {

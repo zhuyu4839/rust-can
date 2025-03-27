@@ -1,11 +1,13 @@
 use std::ffi::{c_uchar, c_uint, CString};
 use dlopen2::symbor::{Symbol, SymBorApi};
-use rs_can::CanError;
+use rs_can::{CanError, ChannelConfig};
 
-use crate::can::{CanChlCfg, ZCanChlError, ZCanChlStatus, ZCanFrameType, ZCanFrame, ZCanChlCfg, ZCanFrameInner, CanMessage};
+use crate::can::{ZCanChlError, ZCanChlStatus, ZCanFrameType, ZCanFrame, ZCanChlCfg, ZCanFrameInner, CanMessage, ZCanChlMode, ZCanChlType};
 use crate::device::{Handler, IProperty, SetValueFunc, ZCanDeviceType, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::constants::{channel_bitrate, channel_work_mode};
 use crate::api::{ZCanApi, ZCloudApi, ZDeviceApi, ZLinApi};
+use crate::can::{common::CanChlCfgContext, constant::BITRATE_CFG_FILENAME};
+use crate::{CHANNEL_MODE, CHANNEL_TYPE};
 
 #[allow(non_snake_case)]
 #[derive(Debug, Clone, SymBorApi)]
@@ -53,7 +55,7 @@ impl USBCANEApi<'_> {
         &self,
         dev_hdl: &mut Handler,
         channel: u8,
-        cfg: &CanChlCfg,
+        cfg: &ChannelConfig,
     ) -> Result<(), CanError> {
         let p = self.self_get_property(dev_hdl.device_context())?;
         let set_value_func = p.SetValue;
@@ -86,7 +88,7 @@ impl USBCANEApi<'_> {
         dev_hdl: &mut Handler,
         channel: u8,
         set_value_func: SetValueFunc,
-        cfg: &CanChlCfg
+        cfg: &ChannelConfig
     ) -> Result<ZChannelContext, CanError> {
         let mut context = ZChannelContext::new(dev_hdl.device_context().clone(), channel);
         self.init_can_chl(&mut context, cfg)?; // ZCAN_InitCAN]
@@ -104,10 +106,10 @@ impl USBCANEApi<'_> {
         &self,
         channel: u8,
         func: SetValueFunc,
-        cfg: &CanChlCfg
+        cfg: &ChannelConfig
     ) -> Result<(), CanError> {
         unsafe {
-            let func = func.ok_or(CanError::OtherError("method not supported".to_owned()))?;
+            let func = func.ok_or(CanError::other_error("method not supported"))?;
             let cmd_path = CString::new(channel_bitrate(channel))
                 .map_err(|e| CanError::OtherError(e.to_string()))?;
             let bitrate = CString::new(cfg.bitrate().to_string())
@@ -119,7 +121,11 @@ impl USBCANEApi<'_> {
 
             let cmd_path = CString::new(channel_work_mode(channel))
                 .map_err(|e| CanError::OtherError(e.to_string()))?;
-            let mode = CString::new(cfg.mode().to_string())
+            let mode = CString::new(
+                cfg.get_other::<u8>(CHANNEL_MODE)?
+                    .unwrap_or(ZCanChlMode::Normal as u8)
+                    .to_string()
+            )
                 .map_err(|e| CanError::OtherError(e.to_string()))?;
             match func(cmd_path.as_ptr(), mode.as_ptr()) as u32 {
                 Self::STATUS_OK => Ok(()),
@@ -179,11 +185,16 @@ impl ZDeviceApi for USBCANEApi<'_> {
 }
 
 impl ZCanApi for USBCANEApi<'_> {
-    fn init_can_chl(&self, context: &mut ZChannelContext, cfg: &CanChlCfg) -> Result<(), CanError> {
+    fn init_can_chl(&self, context: &mut ZChannelContext, cfg: &ChannelConfig) -> Result<(), CanError> {
+        let dev_type = context.device_type();
         let dev_hdl = context.device_handler()?;
         let channel = context.channel() as u32;
+        let cfg_ctx = CanChlCfgContext::new()?;
+        let bc_ctx = cfg_ctx.0.get(&dev_type.to_string())
+            .ok_or(CanError::InitializeError(
+                format!("device: {} is not configured in {}", dev_type, BITRATE_CFG_FILENAME)
+            ))?;
         unsafe {
-            let dev_type = cfg.device_type()?;
             let handler = match dev_type {
                 ZCanDeviceType::ZCAN_USBCAN_4E_U => {
                     match (self.ZCAN_InitCAN)(dev_hdl, channel, std::ptr::null()) as u32 {
@@ -193,7 +204,14 @@ impl ZCanApi for USBCANEApi<'_> {
                     }
                 },
                 ZCanDeviceType::ZCAN_USBCAN_8E_U => {
-                    let cfg = ZCanChlCfg::try_from(cfg)?;
+                    let can_type = cfg.get_other::<u8>(CHANNEL_TYPE)?
+                        .unwrap_or(ZCanChlType::CAN as u8);
+                    let cfg = ZCanChlCfg::new(
+                        dev_type,
+                        ZCanChlType::try_from(can_type)?,
+                        bc_ctx,
+                        cfg
+                    )?;
                     match (self.ZCAN_InitCAN)(dev_hdl, channel, &cfg) as u32 {
                         Self::INVALID_CHANNEL_HANDLE => Err(CanError::InitializeError(format!("ZCAN_InitCAN ret: {}", Self::INVALID_CHANNEL_HANDLE))),
                         handler => {

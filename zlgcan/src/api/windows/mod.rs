@@ -1,15 +1,15 @@
 use std::ffi::{c_char, c_int, c_uchar, c_uint, c_ushort, c_void, CString};
-use std::pin::Pin;
-use rs_can::CanError;
+use rs_can::{CanError, ChannelConfig};
 use dlopen2::symbor::{Symbol, SymBorApi};
-use crate::can::{CanChlCfg, ZCanChlError, ZCanChlStatus, ZCanChlType, ZCanFrame, ZCanFrameType, ZCanChlCfg, ZCanFrameInner, ZCanFdFrameInner, CanMessage};
+use crate::can::{ZCanChlError, ZCanChlStatus, ZCanChlType, ZCanFrame, ZCanFrameType, ZCanChlCfg, ZCanFrameInner, ZCanFdFrameInner, CanMessage};
 use crate::cloud::{ZCloudGpsFrame, ZCloudServerInfo, ZCloudUserData};
 use crate::device::{CmdPath, IProperty, ZCanDeviceType, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::lin::{ZLinChlCfg, ZLinFrame, ZLinPublish, ZLinPublishEx, ZLinSubscribe};
 use crate::utils::c_str_to_string;
 
 use crate::api::{ZCanApi, ZCloudApi, ZDeviceApi, ZLinApi};
-use crate::constants::{STATUS_OFFLINE, STATUS_ONLINE, INTERNAL_RESISTANCE, PROTOCOL, CANFD_ABIT_BAUD_RATE, CANFD_DBIT_BAUD_RATE, BAUD_RATE, CLOCK};
+use crate::can::{common::CanChlCfgContext, constant::BITRATE_CFG_FILENAME};
+use crate::constants::{CHANNEL_TYPE, STATUS_OFFLINE, STATUS_ONLINE, INTERNAL_RESISTANCE, PROTOCOL, CANFD_ABIT_BAUD_RATE, CANFD_DBIT_BAUD_RATE, BAUD_RATE, CLOCK};
 
 #[allow(non_snake_case)]
 #[derive(Debug, Clone, SymBorApi)]
@@ -174,7 +174,8 @@ impl ZDeviceApi for WinApi<'_> {
     fn get_value(&self, context: &ZChannelContext, cmd_path: &CmdPath) -> Result<*const c_void, CanError> {
         unsafe {
             let path = cmd_path.get_path();
-            let path = CString::new(path).map_err(|e| CanError::OtherError(e.to_string()))?;
+            let path = CString::new(path)
+                .map_err(|e| CanError::OtherError(e.to_string()))?;
             if context.device_type().get_value_support() {
                 let ret = (self.ZCAN_GetValue)(context.device_handler()?, path.as_ptr() as *const c_char);
                 if ret.is_null() {
@@ -190,8 +191,8 @@ impl ZDeviceApi for WinApi<'_> {
     fn set_value(&self, context: &ZChannelContext, cmd_path: &CmdPath, value: *const c_void) -> Result<(), CanError> {
         unsafe {
             let path = cmd_path.get_path();
-            let _path = CString::new(path).map_err(|e| CanError::OtherError(e.to_string()))?;
-            // let _value = CString::new(value).map_err(|e| CanError::OtherError(e.to_string()))?;
+            let _path = CString::new(path)
+                .map_err(|e| CanError::OtherError(e.to_string()))?;
             match (self.ZCAN_SetValue)(context.device_handler()?, _path.as_ptr() as *const c_char, value) {
                 Self::STATUS_OK => Ok(()),
                 code=> Err(CanError::OperationError(format!("`ZCAN_SetValue` ret = {}", code))),
@@ -205,8 +206,8 @@ impl ZDeviceApi for WinApi<'_> {
                 Some(f) => {
                     for (cmd, value) in values {
                         let path = cmd.get_path();
-                        // let _path = format!("{}/{}", path, channel);
-                        let _path = CString::new(path).map_err(|e| CanError::OtherError(e.to_string()))?;
+                        let _path = CString::new(path)
+                            .map_err(|e| CanError::OtherError(e.to_string()))?;
                         match f(_path.as_ptr(), value) {
                             1 => (),
                             _ => log::warn!("ZLGCAN - set `{}` failed!", path),
@@ -253,12 +254,18 @@ impl ZDeviceApi for WinApi<'_> {
 }
 
 impl ZCanApi for WinApi<'_> {
-    fn init_can_chl(&self, context: &mut ZChannelContext, cfg: &CanChlCfg) -> Result<(), CanError> {
+    fn init_can_chl(&self, context: &mut ZChannelContext, cfg: &ChannelConfig) -> Result<(), CanError> {
+        let cfg_ctx = CanChlCfgContext::new()?;
         let dev_type = context.device_type();
+        let bc_ctx = cfg_ctx.0.get(&dev_type.to_string())
+            .ok_or(CanError::InitializeError(
+                format!("device: {} is not configured in {}", dev_type, BITRATE_CFG_FILENAME)
+            ))?;
+
         let channel = context.channel();
         unsafe {
             // configure the clock
-            if let Some(clock) = cfg.clock() {
+            if let Some(clock) = bc_ctx.clock {
                 let clock_path = CmdPath::new_path(CLOCK);
                 let value = CString::new(clock.to_string())
                     .map_err(|e| CanError::OtherError(e.to_string()))?;
@@ -266,7 +273,7 @@ impl ZCanApi for WinApi<'_> {
             }
             // set channel resistance status
             if dev_type.has_resistance() {
-                let state = cfg.extra().resistance() as u32;
+                let state = cfg.resistance().unwrap_or(true) as u32;
                 let resistance_path = format!("{}/{}", channel, INTERNAL_RESISTANCE);
                 let resistance_path = CmdPath::new_path(resistance_path.as_str());
                 let value = CString::new(state.to_string())
@@ -274,7 +281,10 @@ impl ZCanApi for WinApi<'_> {
                 self.set_value(context, &resistance_path, value.as_ptr() as *const c_void)?;
             }
 
-            let can_type = cfg.can_type()?;
+            let can_type = match cfg.get_other::<u8>(CHANNEL_TYPE)? {
+                Some(v) => ZCanChlType::try_from(v)?,
+                None => Default::default(),
+            };
             if !matches!(dev_type, ZCanDeviceType::ZCAN_USBCAN1 | ZCanDeviceType::ZCAN_USBCAN2) {
                 // set channel protocol
                 let protocol_path = format!("{}/{}", channel, PROTOCOL);
@@ -294,7 +304,7 @@ impl ZCanApi for WinApi<'_> {
                 self.set_value(context, &abitrate_path, value.as_ptr() as *const c_void)?;
                 match can_type {
                     ZCanChlType::CANFD_ISO | ZCanChlType::CANFD_NON_ISO => {
-                        let dbitrate = cfg.extra().dbitrate.unwrap_or(bitrate);
+                        let dbitrate = cfg.dbitrate().unwrap_or(bitrate);
                         let dbitrate_path = format!("{}/{}", channel, CANFD_DBIT_BAUD_RATE);
                         let dbitrate_path = CmdPath::new_path(dbitrate_path.as_str());
                         let value = CString::new(dbitrate.to_string())
@@ -312,7 +322,7 @@ impl ZCanApi for WinApi<'_> {
                 self.set_value(context, &bitrate_path, value.as_ptr() as *const c_void)?;
             }
 
-            let _cfg = ZCanChlCfg::try_from(cfg)?;
+            let _cfg = ZCanChlCfg::new(dev_type, can_type, bc_ctx, cfg)?;
             match (self.ZCAN_InitCAN)(context.device_handler()?, channel as u32, &_cfg) {
                 Self::INVALID_CHANNEL_HANDLE => Err(
                     CanError::OperationError(format!("`ZCAN_InitCAN` ret = {}", Self::INVALID_CHANNEL_HANDLE))

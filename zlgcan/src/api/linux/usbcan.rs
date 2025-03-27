@@ -1,10 +1,11 @@
 use std::ffi::c_void;
 use dlopen2::symbor::{Symbol, SymBorApi};
-use rs_can::CanError;
+use rs_can::{CanError, ChannelConfig};
 
-use crate::can::{CanChlCfg, ZCanFrame, ZCanChlError, ZCanChlStatus, ZCanFrameType, common::ZCanChlCfgInner, ZCanFrameInner, CanMessage};
+use crate::can::{ZCanFrame, ZCanChlError, ZCanChlStatus, ZCanFrameType, ZCanFrameInner, CanMessage};
 use crate::device::{CmdPath, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::api::{ZCanApi, ZCloudApi, ZDeviceApi, ZLinApi};
+use crate::can::{common::{ZCanChlCfgInner, CanChlCfgContext}, constant::BITRATE_CFG_FILENAME};
 
 #[allow(non_snake_case)]
 #[derive(Debug, Clone, SymBorApi)]
@@ -75,7 +76,6 @@ impl ZDeviceApi for USBCANApi<'_> {
     fn set_reference(&self, context: &ZChannelContext, cmd_path: &CmdPath, value: *const c_void) -> Result<(), CanError> {
         let (dev_type, dev_idx, channel) = (context.device_type(), context.device_index(), context.channel());
         let cmd = cmd_path.get_reference();
-        // let _value = CString::new(value).map_err(|e| CanError::CStringConvertFailed(e.to_string()))?;
         match unsafe { (self.VCI_SetReference)(dev_type as u32, dev_idx, channel as u32, cmd, value) } {
             Self::STATUS_OK => Ok(()),
             code => Err(CanError::OperationError(format!("`VCI_SetReference` ret: {}", code))),
@@ -93,18 +93,19 @@ impl ZDeviceApi for USBCANApi<'_> {
 }
 
 impl ZCanApi for USBCANApi<'_> {
-    fn init_can_chl(&self, context: &mut ZChannelContext, cfg: &CanChlCfg) -> Result<(), CanError> {
+    fn init_can_chl(&self, context: &mut ZChannelContext, cfg: &ChannelConfig) -> Result<(), CanError> {
         let (dev_type, dev_idx, channel) = (context.device_type(), context.device_index(), context.channel());
+        let cfg_ctx = CanChlCfgContext::new()?;
+        let bc_ctx = cfg_ctx.0.get(&dev_type.to_string())
+            .ok_or(CanError::InitializeError(
+                format!("device: {} is not configured in {}", dev_type, BITRATE_CFG_FILENAME)
+            ))?;
         unsafe {
             let dev_type = dev_type as u32;
             let channel = channel as u32;
-            let binding = cfg.cfg_ctx.upgrade()
-                .ok_or(CanError::OtherError("Failed to upgrade configuration context".to_string()))?;
-            let cfg_ctx = binding.get(&dev_type.to_string())
-                .ok_or(CanError::OtherError(format!("device: {:?} is not configured in file!", dev_type)))?;
 
-            let bitrate = cfg.bitrate;
-            let cfg = ZCanChlCfgInner::try_from_with(cfg_ctx, cfg.mode, bitrate, cfg.extra())?;
+            let bitrate = cfg.bitrate();
+            let cfg = ZCanChlCfgInner::try_from_with(bc_ctx, cfg)?;
             match (self.VCI_InitCAN)(dev_type, dev_idx, channel, &cfg) {
                 Self::STATUS_OK => {
                     match (self.VCI_StartCAN)(dev_type, dev_idx, channel) {
@@ -160,7 +161,7 @@ impl ZCanApi for USBCANApi<'_> {
         match can_type {
             ZCanFrameType::CAN => {},
             ZCanFrameType::CANFD => _channel |= 0x8000_0000,
-            ZCanFrameType::ALL => return Err(CanError::OtherError("method not supported".to_owned())),
+            ZCanFrameType::ALL => return Err(CanError::other_error("method not supported")),
         }
         let ret = unsafe { (self.VCI_GetReceiveNum)(dev_type as u32, dev_idx, _channel) };
         if ret > 0 {
@@ -213,12 +214,13 @@ impl ZCloudApi for USBCANApi<'_> {}
 #[cfg(test)]
 mod tests {
     use dlopen2::symbor::{Library, SymBorApi};
-    use rs_can::{CanError, CanFrame, CanId};
-    use crate::can::{ZCanChlMode, ZCanChlType, ZCanFrame, CanMessage, CanChlCfgFactory, ZCanFrameInner};
+    use rs_can::{CanError, CanFrame, CanId, ChannelConfig};
+    use crate::can::{ZCanChlMode, ZCanChlType, ZCanFrame, CanMessage, ZCanFrameInner};
     use crate::constants::LOAD_LIB_FAILED;
     use crate::device::{ZCanDeviceType, ZChannelContext, ZDeviceContext};
     use super::USBCANApi;
     use crate::api::{ZCanApi, ZDeviceApi};
+    use crate::{CHANNEL_MODE, CHANNEL_TYPE};
 
     #[test]
     fn test_init_channel() -> anyhow::Result<()> {
@@ -231,8 +233,10 @@ mod tests {
 
         let api = unsafe { USBCANApi::load(&lib) }.expect("ZLGCAN - could not load symbols!");
 
-        let factory = CanChlCfgFactory::new()?;
-        let cfg = factory.new_can_chl_cfg(dev_type as u32, ZCanChlType::CAN as u8, ZCanChlMode::Normal as u8, 500_000, Default::default())?;
+        let mut cfg = ChannelConfig::new(500_000);
+        cfg.add_other(CHANNEL_TYPE, Box::new(ZCanChlType::CAN as u8))
+            .add_other(CHANNEL_MODE, Box::new(ZCanChlMode::Normal as u8));
+
         let mut context = ZDeviceContext::new(dev_type, dev_idx, false);
         api.open(&mut context)?;
 
@@ -253,12 +257,12 @@ mod tests {
             CanId::from_bits(0x7E0, Some(false)),
             [0x01, 0x02, 0x03].as_slice()
         )
-            .ok_or(CanError::OtherError("invalid data length".to_string()))?;
+            .ok_or(CanError::other_error("invalid data length"))?;
         let frame1 = CanMessage::new(
             CanId::from_bits(0x1888FF00, Some(true)),
             [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08].as_slice()
         )
-            .ok_or(CanError::OtherError("invalid data length".to_string()))?;
+            .ok_or(CanError::other_error("invalid data length"))?;
         let frames = vec![frame, frame1];
         let ret = api.transmit_can(&context, frames)?;
         assert_eq!(ret, 2);

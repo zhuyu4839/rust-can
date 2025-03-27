@@ -11,7 +11,7 @@ impl TryFrom<u8> for ZLinMode {
         match value {
             0 => Ok(ZLinMode::Slave),
             1 => Ok(ZLinMode::Master),
-            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
+            _ => Err(CanError::other_error("parameter not supported")),
         }
     }
 }
@@ -29,7 +29,7 @@ impl TryFrom<u8> for ZLinDataType {
             0 => Ok(ZLinDataType::TypeData),
             1 => Ok(ZLinDataType::TypeError),
             2 => Ok(ZLinDataType::TypeEvent),
-            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
+            _ => Err(CanError::other_error("parameter not supported")),
         }
     }
 }
@@ -47,7 +47,7 @@ impl TryFrom<u8> for ZLinEventType {
             0 => Ok(ZLinEventType::Wakeup),
             1 => Ok(ZLinEventType::EnterSleep),
             2 => Ok(ZLinEventType::ExitSleep),
-            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
+            _ => Err(CanError::other_error("parameter not supported")),
         }
     }
 }
@@ -65,7 +65,7 @@ impl TryFrom<u8> for ZLinCheckSumMode {
             0 => Ok(ZLinCheckSumMode::Classic),
             1 => Ok(ZLinCheckSumMode::Enhance),
             2 => Ok(ZLinCheckSumMode::Auto),
-            _ => Err(CanError::OtherError("parameter not supported".to_owned())),
+            _ => Err(CanError::other_error("parameter not supported")),
         }
     }
 }

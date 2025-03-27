@@ -4,7 +4,7 @@ use rand::{Rng, rng, prelude::ThreadRng};
 use rs_can::{CanError, CanFrame, CanId, ChannelConfig, DeviceBuilder, MAX_FD_FRAME_SIZE, MAX_FRAME_SIZE};
 use rs_can::interfaces::ZLGCAN;
 use zlgcan_rs::{
-    can::{CanChlCfgExt, CanChlCfgFactory, CanMessage, ZCanChlMode, ZCanChlType, ZCanFrameType, ZCanTxMode},
+    can::{CanMessage, ZCanChlMode, ZCanChlType, ZCanFrameType, ZCanTxMode},
     device::{DeriveInfo, ZCanDeviceType},
     driver::{ZCanDriver, ZDevice},
     CHANNEL_MODE, CHANNEL_TYPE, DERIVE_INFO, DEVICE_INDEX, DEVICE_TYPE
@@ -77,16 +77,16 @@ fn device_open(
     Ok(device)
 }
 
-fn channel_reset(driver: &mut ZCanDriver, available: u8, cfg_ext: CanChlCfgExt) -> anyhow::Result<()> {
-    let factory = CanChlCfgFactory::new()?;
-    for i in 0..available {
-        driver.init_can_chl(
-            i,
-            factory.new_can_chl_cfg(driver.device_type() as u32, ZCanChlType::CANFD_ISO as u8, ZCanChlMode::Normal as u8, 500_000, cfg_ext.clone())?
-        )?;
-    }
-    Ok(())
-}
+// fn channel_reset(driver: &mut ZCanDriver, available: u8, cfg_ext: CanChlCfgExt) -> anyhow::Result<()> {
+//     let factory = CanChlCfgFactory::new()?;
+//     for i in 0..available {
+//         driver.init_can_chl(
+//             i,
+//             factory.new_can_chl_cfg(driver.device_type() as u32, ZCanChlType::CANFD_ISO as u8, ZCanChlMode::Normal as u8, 500_000, cfg_ext.clone())?
+//         )?;
+//     }
+//     Ok(())
+// }
 
 fn transmit_can(driver: &ZCanDriver, comm_count: u32, ext_count: u32, trans_ch: u8, recv_ch: u8) -> anyhow::Result<()> {
     let frames1 = new_messages(comm_count, false, false, None)?;
@@ -225,7 +225,11 @@ pub fn canfd_device2(dev_type: ZCanDeviceType, channels: u8, available: u8, tran
 
     println!();
 
-    channel_reset(&mut driver, available, CanChlCfgExt::new(None, Some(1_000_000), None, None, None, None))?;
+    // channel_reset(&mut driver, available, CanChlCfgExt::new(None, Some(1_000_000), None, None, None, None))?;
+    let mut cfg = ChannelConfig::new(500_000);
+    cfg.set_data_bitrate(1_000_000)
+        .add_other(CHANNEL_TYPE, Box::new(ZCanChlType::CANFD_ISO as u8))
+        .add_other(CHANNEL_MODE, Box::new(ZCanChlMode::Normal as u8));
     transmit_canfd(&driver, comm_count, ext_count, brs_count, trans_ch, recv_ch)?;
 
     driver.close();

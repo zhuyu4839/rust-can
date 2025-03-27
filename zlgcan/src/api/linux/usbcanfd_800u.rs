@@ -1,12 +1,14 @@
 use dlopen2::symbor::{Symbol, SymBorApi};
 use std::ffi::{c_char, c_uchar, c_uint, c_void, CString};
-use rs_can::CanError;
+use rs_can::{CanError, ChannelConfig};
 
-use crate::can::{CanChlCfg, ZCanChlCfg, ZCanChlError, ZCanChlStatus, ZCanFrameType, ZCanFrame, ZCanFrameInner, ZCanFdFrameInner, CanMessage};
+use crate::can::{ZCanChlCfg, ZCanChlError, ZCanChlStatus, ZCanFrameType, ZCanFrame, ZCanFrameInner, ZCanFdFrameInner, CanMessage, ZCanChlType};
 use crate::device::{CmdPath, IProperty, ZCanDeviceType, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::utils::c_str_to_string;
 
 use crate::api::{ZCanApi, ZCloudApi, ZDeviceApi, ZLinApi};
+use crate::can::{common::CanChlCfgContext, constant::BITRATE_CFG_FILENAME};
+use crate::CHANNEL_TYPE;
 
 #[allow(non_snake_case)]
 #[derive(Debug, Clone, SymBorApi)]
@@ -118,23 +120,24 @@ impl USBCANFD800UApi<'_> {
         dev_type: ZCanDeviceType,
         dev_idx: u32,
         channel: u8,
-        cfg: &CanChlCfg
+        cfg: &ChannelConfig
     ) -> Result<(), CanError> {
         // set channel resistance status
         if dev_type.has_resistance() {
-            let state = cfg.extra().resistance() as u32;
+            let state = cfg.resistance().unwrap_or(true) as u32;
             let cmd_path = CmdPath::new_reference(USBCANFD800UApi::REF_INTERNAL_RESISTANCE);
             self.self_set_reference(
                 dev_type, dev_idx, channel,
                 cmd_path.get_reference(), &state as *const c_uint as *const c_void)?;
         }
         // set channel protocol
-        let can_type = cfg.can_type()?;
+        let can_type = cfg.get_other::<u32>(CHANNEL_TYPE)?
+            .unwrap_or(ZCanChlType::CANFD_ISO as u32);
         let cmd_path = CmdPath::new_reference(USBCANFD800UApi::REF_CONTROLLER_TYPE);
         self.self_set_reference(
             dev_type, dev_idx, channel,
             cmd_path.get_reference(),
-            &(can_type as u32) as *const c_uint as *const c_void
+            &can_type as *const c_uint as *const c_void
         )
     }
 
@@ -280,11 +283,23 @@ impl ZDeviceApi for USBCANFD800UApi<'_> {
 }
 
 impl ZCanApi for USBCANFD800UApi<'_> {
-    fn init_can_chl(&self, context: &mut ZChannelContext, cfg: &CanChlCfg) -> Result<(), CanError> {
+    fn init_can_chl(&self, context: &mut ZChannelContext, cfg: &ChannelConfig) -> Result<(), CanError> {
         unsafe {
             // init can channel
-            let (dev_hdl, channel) = (context.device_handler()?, context.channel());
-            let cfg = ZCanChlCfg::try_from(cfg)?;
+            let (dev_type, dev_hdl, channel) = (context.device_type(), context.device_handler()?, context.channel());
+            let cfg_ctx = CanChlCfgContext::new()?;
+            let bc_ctx = cfg_ctx.0.get(&dev_type.to_string())
+                .ok_or(CanError::InitializeError(
+                    format!("device: {} is not configured in {}", dev_type, BITRATE_CFG_FILENAME)
+                ))?;
+            let can_type = cfg.get_other::<u8>(CHANNEL_TYPE)?
+                .unwrap_or(ZCanChlType::CAN as u8);
+            let cfg = ZCanChlCfg::new(
+                dev_type,
+                ZCanChlType::try_from(can_type)?,
+                bc_ctx,
+                cfg
+            )?;
             let handler = match (self.ZCAN_InitCAN)(dev_hdl, channel as u32, &cfg) {
                 Self::INVALID_CHANNEL_HANDLE => Err(
                     CanError::InitializeError(format!("`ZCAN_InitCAN` ret: {}", Self::INVALID_CHANNEL_HANDLE))
