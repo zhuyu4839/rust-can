@@ -204,11 +204,11 @@ impl ZCanApi for USBCANEApi<'_> {
                     }
                 },
                 ZCanDeviceType::ZCAN_USBCAN_8E_U => {
-                    let can_type = cfg.get_other::<u8>(CHANNEL_TYPE)?
+                    let chl_type = cfg.get_other::<u8>(CHANNEL_TYPE)?
                         .unwrap_or(ZCanChlType::CAN as u8);
                     let cfg = ZCanChlCfg::new(
                         dev_type,
-                        ZCanChlType::try_from(can_type)?,
+                        ZCanChlType::try_from(chl_type)?,
                         bc_ctx,
                         cfg
                     )?;

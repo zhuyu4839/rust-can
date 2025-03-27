@@ -63,8 +63,8 @@ fn device_open(
 
     for i in 0..available {
         let mut cfg = ChannelConfig::new(500_000);
-        cfg.add_other(CHANNEL_MODE, Box::new(ZCanChlMode::Normal as u8))
-            .add_other(CHANNEL_TYPE, Box::new(ZCanChlType::CANFD_ISO as u8));
+        cfg.add_other(CHANNEL_TYPE, Box::new(ZCanChlType::CANFD_ISO as u8))
+            .add_other(CHANNEL_MODE, Box::new(ZCanChlMode::Normal as u8));
         builder.add_config(i.to_string(), cfg);
     }
 

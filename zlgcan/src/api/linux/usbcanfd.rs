@@ -7,7 +7,7 @@ use crate::device::{CmdPath, ZChannelContext, ZDeviceContext, ZDeviceInfo};
 use crate::lin::{ZLinChlCfg, ZLinFrame, ZLinPublish, ZLinSubscribe};
 use crate::api::{ZCanApi, ZCloudApi, ZDeviceApi, ZLinApi};
 use crate::can::{common::CanChlCfgContext, constant::BITRATE_CFG_FILENAME};
-use crate::CHANNEL_TYPE;
+use crate::{CHANNEL_MODE, CHANNEL_TYPE};
 
 #[allow(non_snake_case)]
 #[derive(Debug, Clone, SymBorApi)]
@@ -174,7 +174,7 @@ impl ZCanApi for USBCANFDApi<'_> {
             let cfg = get_fd_cfg(
                 cfg.get_other::<u8>(CHANNEL_TYPE)?
                     .unwrap_or(ZCanChlType::CANFD_ISO as u8),
-                cfg.get_other::<u8>(CHANNEL_TYPE)?
+                cfg.get_other::<u8>(CHANNEL_MODE)?
                     .unwrap_or(ZCanChlMode::Normal as u8),
                 cfg.bitrate(),
                 cfg.dbitrate(),
