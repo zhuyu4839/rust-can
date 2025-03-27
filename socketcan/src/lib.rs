@@ -40,7 +40,7 @@ impl SocketCan {
                 //     .insert(channel.to_owned(), unsafe { OwnedFd::from_raw_fd(fd) });
                 Ok(())
             })
-            .map_err(|_| CanError::OperationError("device open failed".into()));
+            .map_err(|_| CanError::InitializeError("device open failed".into()));
 
         Ok(())
     }
@@ -364,7 +364,7 @@ impl SocketCan {
                 )
                     .map_err(|e| CanError::OperationError(e.to_string()))
             }
-            None => Err(CanError::OperationError(format!("channel {} not opened", channel))),
+            None => Err(CanError::channel_not_opened(channel)),
         }
     }
 }

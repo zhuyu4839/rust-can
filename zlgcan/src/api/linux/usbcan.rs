@@ -51,7 +51,7 @@ impl ZDeviceApi for USBCANApi<'_> {
         let (dev_type, dev_idx) = (context.device_type(), context.device_index());
         match unsafe { (self.VCI_OpenDevice)(dev_type as u32, dev_idx, 0) } {
             Self::STATUS_OK => Ok(()),
-            code => Err(CanError::OperationError(format!("`VCI_OpenDevice` ret: {}", code))),
+            code => Err(CanError::InitializeError(format!("`VCI_OpenDevice` ret: {}", code))),
         }
     }
 
@@ -160,7 +160,7 @@ impl ZCanApi for USBCANApi<'_> {
         match can_type {
             ZCanFrameType::CAN => {},
             ZCanFrameType::CANFD => _channel |= 0x8000_0000,
-            ZCanFrameType::ALL => return Err(CanError::OperationError("method not supported".to_owned())),
+            ZCanFrameType::ALL => return Err(CanError::OtherError("method not supported".to_owned())),
         }
         let ret = unsafe { (self.VCI_GetReceiveNum)(dev_type as u32, dev_idx, _channel) };
         if ret > 0 {

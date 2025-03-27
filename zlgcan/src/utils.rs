@@ -7,7 +7,8 @@ pub fn c_str_to_string(src: *const c_char) -> Result<String, CanError> {
         Err(CanError::OtherError("null pointer".to_string()))
     } else {
         let c_str = unsafe { CStr::from_ptr(src) };
-        let s_slice = c_str.to_str().map_err(|e| CanError::OtherError(e.to_string()))?;
+        let s_slice = c_str.to_str()
+            .map_err(|e| CanError::OtherError(e.to_string()))?;
         let value = String::from(s_slice);
 
         Ok(value)

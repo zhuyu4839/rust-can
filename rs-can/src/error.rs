@@ -24,11 +24,11 @@ pub enum Error {
 
 impl Error {
     #[inline(always)]
-    pub fn interface_not_matched(i: &str) -> Self {
+    pub fn interface_not_matched<T: std::fmt::Display>(i: T) -> Self {
         Self::InitializeError(format!("interface {} is not matched", i))
     }
     #[inline(always)]
-    pub fn device_open_error(msg: &str) -> Self {
+    pub fn device_open_error<T: std::fmt::Display>(msg: T) -> Self {
         Self::OperationError(format!("{} when device opened", msg))
     }
     #[inline(always)]
@@ -44,11 +44,11 @@ impl Error {
         Self::TimeoutError(format!("at channel: {}", channel))
     }
     #[inline(always)]
-    pub fn operation_error(msg: &str) -> Self {
+    pub fn operation_error<T: Into<String>>(msg: T) -> Self {
         Self::OperationError(msg.into())
     }
     #[inline(always)]
-    pub fn other_error(msg: &str) -> Self {
+    pub fn other_error<T: Into<String>>(msg: T) -> Self {
         Self::OtherError(msg.into())
     }
 }

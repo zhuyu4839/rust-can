@@ -122,7 +122,9 @@ impl WinApi<'_> {
 impl ZDeviceApi for WinApi<'_> {
     fn open(&self, context: &mut ZDeviceContext) -> Result<(), CanError> {
         match unsafe { (self.ZCAN_OpenDevice)(context.device_type() as u32, context.device_index(), 0) } {
-            Self::INVALID_DEVICE_HANDLE => Err(CanError::OperationError(format!("`ZCAN_OpenDevice` ret = {}", Self::INVALID_DEVICE_HANDLE))),
+            Self::INVALID_DEVICE_HANDLE => Err(
+                CanError::OperationError(format!("`ZCAN_OpenDevice` ret = {}", Self::INVALID_DEVICE_HANDLE))
+            ),
             v => {
                 context.set_device_handler(v);
                 Ok(())
@@ -312,7 +314,9 @@ impl ZCanApi for WinApi<'_> {
 
             let _cfg = ZCanChlCfg::try_from(cfg)?;
             match (self.ZCAN_InitCAN)(context.device_handler()?, channel as u32, &_cfg) {
-                Self::INVALID_CHANNEL_HANDLE => Err(CanError::OperationError(format!("`ZCAN_InitCAN` ret = {}", Self::INVALID_CHANNEL_HANDLE))),
+                Self::INVALID_CHANNEL_HANDLE => Err(
+                    CanError::OperationError(format!("`ZCAN_InitCAN` ret = {}", Self::INVALID_CHANNEL_HANDLE))
+                ),
                 handler => match (self.ZCAN_StartCAN)(handler) {
                     Self::STATUS_OK => {
                         context.set_channel_handler(Some(handler));
@@ -476,13 +480,15 @@ impl ZLinApi for WinApi<'_> {
             let dev_hdl = context.device_handler()?;
             let channel = context.channel();
             match (self.ZCAN_InitLIN)(dev_hdl, channel as u32, cfg) {
-                Self::INVALID_CHANNEL_HANDLE => Err(CanError::OperationError(format!("`ZCAN_InitLIN` ret = {}", Self::INVALID_CHANNEL_HANDLE))),
+                Self::INVALID_CHANNEL_HANDLE => Err(
+                    CanError::OperationError(format!("`ZCAN_InitLIN` ret = {}", Self::INVALID_CHANNEL_HANDLE))
+                ),
                 handler => match (self.ZCAN_StartLIN)(dev_hdl) {
                     Self::STATUS_OK => {
                         context.set_channel_handler(Some(handler));
                         Ok(())
                     },
-                    code => Err(CanError::OperationError(format!("`ZCAN_StartLIN` ret = {}", code))),
+                    code => Err(CanError::InitializeError(format!("`ZCAN_StartLIN` ret = {}", code))),
                 }
             }
         }
@@ -574,8 +580,10 @@ impl ZCloudApi for WinApi<'_> {
         Ok(())
     }
     fn connect_server(&self, username: &str, password: &str) -> Result<(), CanError> {
-        let username = CString::new(username).map_err(|e| CanError::OtherError(e.to_string()))?;
-        let password = CString::new(password).map_err(|e| CanError::OtherError(e.to_string()))?;
+        let username = CString::new(username)
+            .map_err(|e| CanError::OtherError(e.to_string()))?;
+        let password = CString::new(password)
+            .map_err(|e| CanError::OtherError(e.to_string()))?;
         match unsafe { (self.ZCLOUD_ConnectServer)(username.as_ptr(), password.as_ptr()) } {
             Self::STATUS_OK => Ok(()),
             code=> Err(CanError::OperationError(format!("`ZCLOUD_ConnectServer` ret = {}", code))),

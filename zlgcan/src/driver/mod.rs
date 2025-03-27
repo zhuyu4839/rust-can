@@ -194,7 +194,7 @@ pub trait ZDevice {
         self.device_handler(|hdl| -> Result<T, CanError> {
             match hdl.find_can(channel) {
                 Some(context) => callback(context),
-                None => Err(CanError::OperationError(channel.to_string())),
+                None => Err(CanError::channel_not_opened(channel)),
             }
         })
     }
@@ -206,7 +206,7 @@ pub trait ZDevice {
         self.device_handler(|hdl| -> Result<T, CanError> {
             match hdl.lin_channels().get(&channel) {
                 Some(chl) => callback(chl),
-                None => Err(CanError::OperationError(channel.to_string())),
+                None => Err(CanError::channel_not_opened(channel)),
             }
         })
     }

@@ -102,13 +102,13 @@ impl NiCan {
             )
         };
         if ret != 0 {
-            return Err(CanError::operation_error("device configration error"));
+            return Err(CanError::InitializeError("device configration error".into()));
         }
 
         let mut handle = 0;
         let ret = unsafe { (self.ncOpenObject)(chl_ascii.into_raw(), &mut handle) };
         if ret != 0 {
-            return Err(CanError::operation_error("device open error"));
+            return Err(CanError::InitializeError("device open error".into()));
         }
 
         self.channels.insert(channel.into(), NiCanContext {
