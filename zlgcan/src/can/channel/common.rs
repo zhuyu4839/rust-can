@@ -2,7 +2,7 @@ use std::{collections::HashMap, fs::read_to_string, ffi::{c_uchar, c_uint, c_ush
 use serde::Deserialize;
 use rs_can::{CanError, ChannelConfig};
 use crate::can::{ZCanFilterType, constant::{BITRATE_CFG_FILENAME, TIMING0, TIMING1, ZCAN_ENV, ZCAN_VAR}};
-use crate::{ACC_CODE, ACC_MASK, CHANNEL_MODE, FILTER};
+use crate::{ACC_CODE, ACC_MASK, CHANNEL_MODE, FILTER_TYPE};
 
 #[repr(C)]
 #[allow(non_camel_case_types)]
@@ -129,8 +129,8 @@ impl ZCanChlCfgInner {
                         .unwrap_or(ZCanChlMode::Normal as u8),
                     timing0,
                     timing1,
-                    cfg.get_other::<u8>(FILTER)?
-                        .unwrap_or(0xFF),
+                    cfg.get_other::<u8>(FILTER_TYPE)?
+                        .unwrap_or(ZCanFilterType::default() as u8),
                     cfg.get_other::<u32>(ACC_CODE)?,
                     cfg.get_other::<u32>(ACC_MASK)?,
                 )

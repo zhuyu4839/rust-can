@@ -257,7 +257,7 @@ impl ZCanApi for WinApi<'_> {
     fn init_can_chl(&self, context: &mut ZChannelContext, cfg: &ChannelConfig) -> Result<(), CanError> {
         let cfg_ctx = CanChlCfgContext::new()?;
         let dev_type = context.device_type();
-        let bc_ctx = cfg_ctx.0.get(&dev_type.to_string())
+        let bc_ctx = cfg_ctx.0.get(&(dev_type as u32).to_string())
             .ok_or(CanError::InitializeError(
                 format!("device: {} is not configured in {}", dev_type, BITRATE_CFG_FILENAME)
             ))?;

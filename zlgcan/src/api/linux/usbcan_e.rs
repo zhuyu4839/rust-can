@@ -190,7 +190,7 @@ impl ZCanApi for USBCANEApi<'_> {
         let dev_hdl = context.device_handler()?;
         let channel = context.channel() as u32;
         let cfg_ctx = CanChlCfgContext::new()?;
-        let bc_ctx = cfg_ctx.0.get(&dev_type.to_string())
+        let bc_ctx = cfg_ctx.0.get(&(dev_type as u32).to_string())
             .ok_or(CanError::InitializeError(
                 format!("device: {} is not configured in {}", dev_type, BITRATE_CFG_FILENAME)
             ))?;

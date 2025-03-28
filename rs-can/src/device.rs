@@ -125,7 +125,7 @@ fn get_other<T: Clone + 'static>(
     match others.get(name)  {
         Some(v) => Ok(Some(
             v.downcast_ref::<T>()
-                .ok_or(Error::other_error("type mismatched"))?
+                .ok_or(Error::OtherError(format!("type mismatched: {}", name)))?
                 .clone()
         )),
         None => Ok(None),

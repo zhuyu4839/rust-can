@@ -288,7 +288,7 @@ impl ZCanApi for USBCANFD800UApi<'_> {
             // init can channel
             let (dev_type, dev_hdl, channel) = (context.device_type(), context.device_handler()?, context.channel());
             let cfg_ctx = CanChlCfgContext::new()?;
-            let bc_ctx = cfg_ctx.0.get(&dev_type.to_string())
+            let bc_ctx = cfg_ctx.0.get(&(dev_type as u32).to_string())
                 .ok_or(CanError::InitializeError(
                     format!("device: {} is not configured in {}", dev_type, BITRATE_CFG_FILENAME)
                 ))?;
