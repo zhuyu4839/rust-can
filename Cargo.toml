@@ -13,7 +13,7 @@ default-members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.2.0-alpha3"
+version = "0.2.0-alpha4"
 edition = "2021"
 license = "MIT OR GPL-3.0"
 authors = ["Jesse Smith <zhuyu4839@gmail.com>"]
@@ -28,7 +28,7 @@ serde = "1.0"
 serde_yaml = "0.9"
 thiserror = "2"
 
-rs-can = { path = "rs-can", version = "0.2.0-alpha3" }
+rs-can = { path = "rs-can", version = "0.2.0-alpha4" }
 
 # dev-dependencies
 anyhow = "1"
