@@ -1,12 +1,12 @@
 use zlgcan_rs::{can::{ZCanChlMode, ZCanChlType}, device::ZCanDeviceType, driver::ZCanDriver, CHANNEL_MODE, CHANNEL_TYPE, DEVICE_INDEX, DEVICE_TYPE};
-use rs_can::{CanError, DeviceBuilder, interfaces::ZLGCAN, ChannelConfig};
+use rs_can::{CanError, DeviceBuilder, ChannelConfig};
 
 pub const CHANNEL: u8 = 0;
 
 pub fn init_device() -> Result<ZCanDriver, CanError> {
     let dev_type = ZCanDeviceType::ZCAN_USBCANFD_200U;
 
-    let mut builder = DeviceBuilder::new(ZLGCAN);
+    let mut builder = DeviceBuilder::new();
 
     let mut ch1_cfg = ChannelConfig::new(500_000);
     ch1_cfg.add_other(CHANNEL_MODE, Box::new(ZCanChlMode::Normal as u8))

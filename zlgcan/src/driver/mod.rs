@@ -1,4 +1,4 @@
-use rs_can::{interfaces, CanDevice, CanError, CanFrame, CanResult, CanType, ChannelConfig, DeviceBuilder};
+use rs_can::{CanDevice, CanError, CanFrame, CanResult, CanType, ChannelConfig, DeviceBuilder};
 use crate::can::{CanMessage, ZCanChlError, ZCanChlStatus, ZCanFrameType};
 use crate::cloud::{ZCloudGpsFrame, ZCloudServerInfo, ZCloudUserData};
 use crate::constants;
@@ -73,10 +73,6 @@ impl TryFrom<DeviceBuilder> for ZCanDriver {
     type Error = CanError;
 
     fn try_from(builder: DeviceBuilder) -> Result<Self, Self::Error> {
-        if builder.interface() != interfaces::ZLGCAN {
-            return Err(CanError::interface_not_matched(builder.interface()));
-        }
-
         let dev_type = builder.get_other::<u32>(constants::DEVICE_TYPE)?
             .ok_or(CanError::other_error("`device_type` not found`"))?;
         let dev_idx = builder.get_other::<u32>(constants::DEVICE_INDEX)?

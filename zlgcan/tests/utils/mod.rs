@@ -2,7 +2,6 @@ use std::thread;
 use std::time::{Duration, SystemTime};
 use rand::{Rng, rng, prelude::ThreadRng};
 use rs_can::{CanError, CanFrame, CanId, ChannelConfig, DeviceBuilder, MAX_FD_FRAME_SIZE, MAX_FRAME_SIZE};
-use rs_can::interfaces::ZLGCAN;
 use zlgcan_rs::{
     can::{CanMessage, ZCanChlMode, ZCanChlType, ZCanFrameType, ZCanTxMode},
     device::{DeriveInfo, ZCanDeviceType},
@@ -54,7 +53,7 @@ fn device_open(
     available: u8,
     canfd: bool,
 ) -> anyhow::Result<ZCanDriver> {
-    let mut builder = DeviceBuilder::new(ZLGCAN);
+    let mut builder = DeviceBuilder::new();
     builder.add_other(DEVICE_TYPE, Box::new(dev_type as u32))
         .add_other(DEVICE_INDEX, Box::new(dev_idx));
     if let Some(derive_info) = derive_info {

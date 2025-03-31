@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::ffi::{c_char, CStr, CString};
 use winapi::{shared::minwindef::HMODULE, um::{errhandlingapi::GetLastError, libloaderapi::{LoadLibraryA, GetProcAddress}, winnt::LPCSTR}};
-use rs_can::{interfaces, CanDevice, CanError, CanFilter, CanFrame, CanResult, DeviceBuilder};
+use rs_can::{CanDevice, CanError, CanFilter, CanFrame, CanResult, DeviceBuilder};
 use crate::{api::*, CanMessage, constant, FILTERS, LOG_ERROR};
 
 #[derive(Debug, Clone)]
@@ -325,10 +325,6 @@ impl TryFrom<DeviceBuilder> for NiCan {
     type Error = CanError;
 
     fn try_from(builder: DeviceBuilder) -> Result<Self, Self::Error> {
-        if builder.interface() != interfaces::NI_CAN {
-            return Err(CanError::interface_not_matched(builder.interface()));
-        }
-
         let mut device = NiCan::new(None)?;
         builder.channel_configs()
             .iter()

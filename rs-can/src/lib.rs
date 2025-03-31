@@ -3,7 +3,6 @@ mod device;
 mod error;
 mod frame;
 pub mod can_utils;
-pub mod interfaces;
 
 pub(crate) use can_utils as utils;
 

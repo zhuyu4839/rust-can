@@ -7,7 +7,7 @@ pub use socket::*;
 
 use std::{collections::HashMap, io, sync::Arc, os::{fd::{AsRawFd, BorrowedFd, FromRawFd, OwnedFd}, raw::{c_int, c_void}}, time::{Instant, Duration}};
 use libc::{can_filter, can_frame, canfd_frame, canxl_frame, fcntl, read, CAN_RAW_ERR_FILTER, CAN_RAW_FILTER, CAN_RAW_JOIN_FILTERS, CAN_RAW_LOOPBACK, CAN_RAW_RECV_OWN_MSGS, EINPROGRESS, F_GETFL, F_SETFL, O_NONBLOCK, SOL_CAN_RAW, SOL_SOCKET, SO_RCVTIMEO, SO_SNDTIMEO};
-use rs_can::{CanDevice, CanError, CanFilter, CanDirect, CanFrame, CanResult, ERR_MASK, DeviceBuilder, interfaces};
+use rs_can::{CanDevice, CanError, CanFilter, CanDirect, CanFrame, CanResult, ERR_MASK, DeviceBuilder};
 
 pub(crate) const FRAME_SIZE: usize = std::mem::size_of::<can_frame>();
 pub(crate) const FD_FRAME_SIZE: usize = std::mem::size_of::<canfd_frame>();
@@ -373,10 +373,6 @@ impl TryFrom<DeviceBuilder> for SocketCan {
     type Error = CanError;
 
     fn try_from(builder: DeviceBuilder) -> Result<Self, Self::Error> {
-        if builder.interface() != interfaces::SOCKETCAN {
-            return Err(CanError::interface_not_matched(builder.interface()));
-        }
-
         let mut device = SocketCan::new();
         builder.channel_configs()
             .iter()

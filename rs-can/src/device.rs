@@ -78,7 +78,6 @@ impl ChannelConfig {
 
 #[derive(Debug, Default, Getters)]
 pub struct DeviceBuilder {
-    interface: String,
     channel: Option<String>,
     #[getter(rename = "channel_configs")]
     configs: HashMap<String, ChannelConfig>,
@@ -86,11 +85,8 @@ pub struct DeviceBuilder {
 }
 
 impl DeviceBuilder {
-    pub fn new(interface: &str) -> Self {
-        Self {
-            interface: interface.into(),
-            ..Default::default()
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn set_channel<S: Into<String>>(&mut self, channel: S) -> &mut Self {
