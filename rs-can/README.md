@@ -1,9 +1,8 @@
-# A uniform CAN driver
-
 [![Latest version](https://img.shields.io/crates/v/rs-can.svg)](https://crates.io/crates/rs-can)
 [![Documentation](https://docs.rs/bleasy/badge.svg)](https://docs.rs/rs-can)
 ![LGPL](https://img.shields.io/badge/license-LGPL-green.svg)
 ![MIT](https://img.shields.io/badge/license-MIT-yellow.svg)
+![Downloads](https://img.shields.io/crates/d/rs-can)
 
 ## Overview
 **rs-can** is a driver for CAN device.
